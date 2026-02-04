@@ -25,6 +25,8 @@ export type Database = {
           id: string
           max_rps: number | null
           name: string
+          notes: string | null
+          platform_hint: string | null
           updated_at: string
           user_id: string
         }
@@ -38,6 +40,8 @@ export type Database = {
           id?: string
           max_rps?: number | null
           name: string
+          notes?: string | null
+          platform_hint?: string | null
           updated_at?: string
           user_id: string
         }
@@ -51,6 +55,8 @@ export type Database = {
           id?: string
           max_rps?: number | null
           name?: string
+          notes?: string | null
+          platform_hint?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -93,6 +99,8 @@ export type Database = {
       }
       scan_findings: {
         Row: {
+          affected_targets: Json
+          artifact_refs: Json
           category: Database["public"]["Enums"]["finding_category"]
           confidence: Database["public"]["Enums"]["confidence_level"]
           created_at: string
@@ -101,13 +109,17 @@ export type Database = {
           evidence_redacted: string | null
           fix_recommendation: string | null
           id: string
+          impact: string | null
           lovable_fix_prompt: string | null
           repro_steps: string[] | null
           scan_run_id: string
           severity: Database["public"]["Enums"]["severity_level"]
           title: string
+          updated_at: string
         }
         Insert: {
+          affected_targets?: Json
+          artifact_refs?: Json
           category: Database["public"]["Enums"]["finding_category"]
           confidence?: Database["public"]["Enums"]["confidence_level"]
           created_at?: string
@@ -116,13 +128,17 @@ export type Database = {
           evidence_redacted?: string | null
           fix_recommendation?: string | null
           id?: string
+          impact?: string | null
           lovable_fix_prompt?: string | null
           repro_steps?: string[] | null
           scan_run_id: string
           severity: Database["public"]["Enums"]["severity_level"]
           title: string
+          updated_at?: string
         }
         Update: {
+          affected_targets?: Json
+          artifact_refs?: Json
           category?: Database["public"]["Enums"]["finding_category"]
           confidence?: Database["public"]["Enums"]["confidence_level"]
           created_at?: string
@@ -131,11 +147,13 @@ export type Database = {
           evidence_redacted?: string | null
           fix_recommendation?: string | null
           id?: string
+          impact?: string | null
           lovable_fix_prompt?: string | null
           repro_steps?: string[] | null
           scan_run_id?: string
           severity?: Database["public"]["Enums"]["severity_level"]
           title?: string
+          updated_at?: string
         }
         Relationships: [
           {
@@ -149,6 +167,7 @@ export type Database = {
       }
       scan_metrics: {
         Row: {
+          concurrency: number | null
           endpoint: string | null
           error_rate: number | null
           id: string
@@ -156,13 +175,16 @@ export type Database = {
           p50_ms: number | null
           p95_ms: number | null
           p99_ms: number | null
+          raw: Json
           recorded_at: string
           rps: number | null
           sample_count: number | null
           scan_run_id: string
+          step_label: string | null
           timeout_rate: number | null
         }
         Insert: {
+          concurrency?: number | null
           endpoint?: string | null
           error_rate?: number | null
           id?: string
@@ -170,13 +192,16 @@ export type Database = {
           p50_ms?: number | null
           p95_ms?: number | null
           p99_ms?: number | null
+          raw?: Json
           recorded_at?: string
           rps?: number | null
           sample_count?: number | null
           scan_run_id: string
+          step_label?: string | null
           timeout_rate?: number | null
         }
         Update: {
+          concurrency?: number | null
           endpoint?: string | null
           error_rate?: number | null
           id?: string
@@ -184,10 +209,12 @@ export type Database = {
           p50_ms?: number | null
           p95_ms?: number | null
           p99_ms?: number | null
+          raw?: Json
           recorded_at?: string
           rps?: number | null
           sample_count?: number | null
           scan_run_id?: string
+          step_label?: string | null
           timeout_rate?: number | null
         }
         Relationships: [
@@ -200,12 +227,71 @@ export type Database = {
           },
         ]
       }
+      scan_reports: {
+        Row: {
+          created_at: string
+          html_artifact_id: string | null
+          id: string
+          pdf_artifact_id: string | null
+          report_model: Json
+          scan_run_id: string
+          summary: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          html_artifact_id?: string | null
+          id?: string
+          pdf_artifact_id?: string | null
+          report_model?: Json
+          scan_run_id: string
+          summary?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          html_artifact_id?: string | null
+          id?: string
+          pdf_artifact_id?: string | null
+          report_model?: Json
+          scan_run_id?: string
+          summary?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_reports_html_artifact_id_fkey"
+            columns: ["html_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "scan_artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_reports_pdf_artifact_id_fkey"
+            columns: ["pdf_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "scan_artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scan_reports_scan_run_id_fkey"
+            columns: ["scan_run_id"]
+            isOneToOne: true
+            referencedRelation: "scan_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_runs: {
         Row: {
+          allow_advanced_tests: boolean
+          app_profile: Json
+          approved_for_production: boolean
           config: Json | null
           created_at: string
           ended_at: string | null
           error_message: string | null
+          error_summary: string | null
           id: string
           mode: Database["public"]["Enums"]["scan_mode"]
           project_id: string
@@ -215,10 +301,14 @@ export type Database = {
           status: Database["public"]["Enums"]["scan_status"]
         }
         Insert: {
+          allow_advanced_tests?: boolean
+          app_profile?: Json
+          approved_for_production?: boolean
           config?: Json | null
           created_at?: string
           ended_at?: string | null
           error_message?: string | null
+          error_summary?: string | null
           id?: string
           mode?: Database["public"]["Enums"]["scan_mode"]
           project_id: string
@@ -228,10 +318,14 @@ export type Database = {
           status?: Database["public"]["Enums"]["scan_status"]
         }
         Update: {
+          allow_advanced_tests?: boolean
+          app_profile?: Json
+          approved_for_production?: boolean
           config?: Json | null
           created_at?: string
           ended_at?: string | null
           error_message?: string | null
+          error_summary?: string | null
           id?: string
           mode?: Database["public"]["Enums"]["scan_mode"]
           project_id?: string
@@ -252,10 +346,13 @@ export type Database = {
       }
       scan_tasks: {
         Row: {
+          attempt_count: number
           created_at: string
           ended_at: string | null
+          error_detail: string | null
           error_message: string | null
           id: string
+          max_attempts: number
           max_retries: number | null
           output: Json | null
           retries: number | null
@@ -265,10 +362,13 @@ export type Database = {
           task_type: string
         }
         Insert: {
+          attempt_count?: number
           created_at?: string
           ended_at?: string | null
+          error_detail?: string | null
           error_message?: string | null
           id?: string
+          max_attempts?: number
           max_retries?: number | null
           output?: Json | null
           retries?: number | null
@@ -278,10 +378,13 @@ export type Database = {
           task_type: string
         }
         Update: {
+          attempt_count?: number
           created_at?: string
           ended_at?: string | null
+          error_detail?: string | null
           error_message?: string | null
           id?: string
+          max_attempts?: number
           max_retries?: number | null
           output?: Json | null
           retries?: number | null
@@ -309,7 +412,12 @@ export type Database = {
     }
     Enums: {
       confidence_level: "high" | "medium" | "low"
-      environment_type: "production" | "staging" | "development"
+      environment_type:
+        | "production"
+        | "staging"
+        | "development"
+        | "prod"
+        | "dev"
       finding_category:
         | "tls"
         | "headers"
@@ -330,8 +438,23 @@ export type Database = {
         | "completed"
         | "failed"
         | "cancelled"
-      severity_level: "critical" | "high" | "medium" | "low" | "info"
-      task_status: "pending" | "running" | "completed" | "failed" | "skipped"
+        | "queued"
+        | "canceled"
+      severity_level:
+        | "critical"
+        | "high"
+        | "medium"
+        | "low"
+        | "info"
+        | "not_tested"
+      task_status:
+        | "pending"
+        | "running"
+        | "completed"
+        | "failed"
+        | "skipped"
+        | "queued"
+        | "canceled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -460,7 +583,7 @@ export const Constants = {
   public: {
     Enums: {
       confidence_level: ["high", "medium", "low"],
-      environment_type: ["production", "staging", "development"],
+      environment_type: ["production", "staging", "development", "prod", "dev"],
       finding_category: [
         "tls",
         "headers",
@@ -482,9 +605,26 @@ export const Constants = {
         "completed",
         "failed",
         "cancelled",
+        "queued",
+        "canceled",
       ],
-      severity_level: ["critical", "high", "medium", "low", "info"],
-      task_status: ["pending", "running", "completed", "failed", "skipped"],
+      severity_level: [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info",
+        "not_tested",
+      ],
+      task_status: [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "skipped",
+        "queued",
+        "canceled",
+      ],
     },
   },
 } as const

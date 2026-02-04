@@ -22,6 +22,21 @@ export function FindingCard({ finding, className }: FindingCardProps) {
     }
   };
 
+  // Helper to render evidence - handle both string and object types
+  const renderEvidence = () => {
+    if (!finding.evidence_redacted) return null;
+    
+    if (typeof finding.evidence_redacted === 'string') {
+      return finding.evidence_redacted;
+    }
+    
+    return JSON.stringify(finding.evidence_redacted, null, 2);
+  };
+
+  // Get affected endpoint from endpoint or first affected_targets entry
+  const affectedEndpoint = finding.endpoint || 
+    (finding.affected_targets && finding.affected_targets.length > 0 ? finding.affected_targets[0] : null);
+
   return (
     <Card className={cn(
       "transition-all duration-200 hover:shadow-md border-l-4",
@@ -30,6 +45,7 @@ export function FindingCard({ finding, className }: FindingCardProps) {
       finding.severity === 'medium' && "border-l-severity-medium",
       finding.severity === 'low' && "border-l-severity-low",
       finding.severity === 'info' && "border-l-severity-info",
+      finding.severity === 'not_tested' && "border-l-muted",
       className
     )}>
       <CardHeader 
@@ -58,14 +74,31 @@ export function FindingCard({ finding, className }: FindingCardProps) {
 
       {expanded && (
         <CardContent className="pt-0 space-y-4">
-          {finding.endpoint && (
+          {affectedEndpoint && (
             <div>
               <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                 Affected Endpoint
               </h4>
               <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
-                {finding.endpoint}
+                {affectedEndpoint}
               </code>
+            </div>
+          )}
+
+          {finding.affected_targets && finding.affected_targets.length > 1 && (
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                All Affected Targets
+              </h4>
+              <ul className="space-y-1">
+                {finding.affected_targets.map((target, i) => (
+                  <li key={i}>
+                    <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
+                      {target}
+                    </code>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -75,8 +108,17 @@ export function FindingCard({ finding, className }: FindingCardProps) {
                 Evidence (Redacted)
               </h4>
               <pre className="text-sm bg-muted p-3 rounded-lg overflow-x-auto font-mono">
-                {finding.evidence_redacted}
+                {renderEvidence()}
               </pre>
+            </div>
+          )}
+
+          {finding.impact && (
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                Impact
+              </h4>
+              <p className="text-sm text-foreground">{finding.impact}</p>
             </div>
           )}
 
