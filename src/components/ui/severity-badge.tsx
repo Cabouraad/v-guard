@@ -12,6 +12,7 @@ const severityBadgeVariants = cva(
         medium: "severity-medium",
         low: "severity-low",
         info: "severity-info",
+        not_tested: "bg-muted text-muted-foreground border-border",
       },
       size: {
         sm: "px-2 py-0.5 text-[10px]",
@@ -39,6 +40,7 @@ export function SeverityBadge({ severity, size, showIcon = true, className }: Se
     medium: 'Medium',
     low: 'Low',
     info: 'Info',
+    not_tested: 'Not Tested',
   };
 
   return (
@@ -51,6 +53,7 @@ export function SeverityBadge({ severity, size, showIcon = true, className }: Se
           severity === 'medium' && "bg-severity-medium",
           severity === 'low' && "bg-severity-low",
           severity === 'info' && "bg-severity-info",
+          severity === 'not_tested' && "bg-muted-foreground",
         )} />
       )}
       {labels[severity]}

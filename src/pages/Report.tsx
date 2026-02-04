@@ -37,6 +37,7 @@ const findings: ScanFinding[] = [
     confidence: 'high',
     title: 'Missing Content Security Policy (CSP)',
     description: 'The application does not implement a Content Security Policy header, leaving it vulnerable to XSS attacks and data injection.',
+    affected_targets: ['/'],
     evidence_redacted: 'Response headers:\nX-Frame-Options: SAMEORIGIN\nX-Content-Type-Options: nosniff\n// No CSP header found',
     repro_steps: [
       'Open browser developer tools',
@@ -57,6 +58,7 @@ const findings: ScanFinding[] = [
     confidence: 'high',
     title: 'Exposed API Keys in Client Bundle',
     description: 'Private API keys are visible in the client-side JavaScript bundle, potentially allowing unauthorized access to backend services.',
+    affected_targets: ['/assets/index.js'],
     evidence_redacted: 'Found in bundle:\nconst OPENAI_KEY = "sk-****redacted****"\nconst STRIPE_SECRET = "sk_live_****redacted****"',
     repro_steps: [
       'Open browser developer tools',
@@ -77,6 +79,7 @@ const findings: ScanFinding[] = [
     confidence: 'medium',
     title: 'Overly Permissive CORS Configuration',
     description: 'The API allows requests from any origin (*), which could enable cross-site request forgery attacks.',
+    affected_targets: ['/api/*'],
     evidence_redacted: 'Access-Control-Allow-Origin: *\nAccess-Control-Allow-Methods: GET, POST, PUT, DELETE',
     fix_recommendation: 'Restrict CORS to specific trusted origins. Use a whitelist of allowed domains instead of the wildcard.',
     lovable_fix_prompt: 'Update my edge function CORS configuration to only allow requests from my specific frontend domain instead of using the wildcard (*). Add proper origin validation.',
@@ -91,6 +94,7 @@ const findings: ScanFinding[] = [
     confidence: 'high',
     title: 'Missing X-Frame-Options Header',
     description: 'The application may be vulnerable to clickjacking attacks as X-Frame-Options is not set.',
+    affected_targets: ['/'],
     fix_recommendation: 'Add X-Frame-Options: DENY or SAMEORIGIN header to prevent the page from being embedded in iframes.',
     lovable_fix_prompt: 'Add X-Frame-Options header set to DENY to all my application responses to prevent clickjacking attacks.',
     endpoint: '/',
@@ -104,6 +108,7 @@ const findings: ScanFinding[] = [
     confidence: 'high',
     title: 'Session Cookie Missing Secure Flag',
     description: 'The session cookie is not marked as Secure, allowing it to be transmitted over unencrypted connections.',
+    affected_targets: ['/'],
     fix_recommendation: 'Set the Secure flag on all session cookies to ensure they are only sent over HTTPS.',
     endpoint: '/',
     created_at: '',
@@ -116,6 +121,7 @@ const findings: ScanFinding[] = [
     confidence: 'medium',
     title: 'Slow Time to First Byte (TTFB)',
     description: 'The initial server response takes longer than recommended (>500ms), which may impact user experience.',
+    affected_targets: ['/'],
     fix_recommendation: 'Optimize server-side rendering, enable caching, or consider using a CDN to reduce TTFB.',
     endpoint: '/',
     created_at: '',
@@ -137,12 +143,13 @@ const performanceData = [
 ];
 
 export default function Report() {
-  const severityCounts = {
+  const severityCounts: Record<string, number> = {
     critical: findings.filter(f => f.severity === 'critical').length,
     high: findings.filter(f => f.severity === 'high').length,
     medium: findings.filter(f => f.severity === 'medium').length,
     low: findings.filter(f => f.severity === 'low').length,
     info: findings.filter(f => f.severity === 'info').length,
+    not_tested: findings.filter(f => f.severity === 'not_tested').length,
   };
 
   return (

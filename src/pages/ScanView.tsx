@@ -19,14 +19,14 @@ import type { ScanTask, ScanStatus } from '@/types/database';
 
 // Simulated scan tasks for demo
 const initialTasks: ScanTask[] = [
-  { id: '1', scan_run_id: 'demo', task_type: 'fingerprint', status: 'pending', retries: 0, max_retries: 3, output: {}, created_at: '' },
-  { id: '2', scan_run_id: 'demo', task_type: 'tls_check', status: 'pending', retries: 0, max_retries: 3, output: {}, created_at: '' },
-  { id: '3', scan_run_id: 'demo', task_type: 'security_headers', status: 'pending', retries: 0, max_retries: 3, output: {}, created_at: '' },
-  { id: '4', scan_run_id: 'demo', task_type: 'cors_check', status: 'pending', retries: 0, max_retries: 3, output: {}, created_at: '' },
-  { id: '5', scan_run_id: 'demo', task_type: 'cookie_check', status: 'pending', retries: 0, max_retries: 3, output: {}, created_at: '' },
-  { id: '6', scan_run_id: 'demo', task_type: 'exposure_check', status: 'pending', retries: 0, max_retries: 3, output: {}, created_at: '' },
-  { id: '7', scan_run_id: 'demo', task_type: 'perf_baseline', status: 'pending', retries: 0, max_retries: 3, output: {}, created_at: '' },
-  { id: '8', scan_run_id: 'demo', task_type: 'load_ramp_light', status: 'pending', retries: 0, max_retries: 3, output: {}, created_at: '' },
+  { id: '1', scan_run_id: 'demo', task_type: 'fingerprint', status: 'pending', retries: 0, max_retries: 3, attempt_count: 0, max_attempts: 3, output: {}, created_at: '' },
+  { id: '2', scan_run_id: 'demo', task_type: 'tls_check', status: 'pending', retries: 0, max_retries: 3, attempt_count: 0, max_attempts: 3, output: {}, created_at: '' },
+  { id: '3', scan_run_id: 'demo', task_type: 'security_headers', status: 'pending', retries: 0, max_retries: 3, attempt_count: 0, max_attempts: 3, output: {}, created_at: '' },
+  { id: '4', scan_run_id: 'demo', task_type: 'cors_check', status: 'pending', retries: 0, max_retries: 3, attempt_count: 0, max_attempts: 3, output: {}, created_at: '' },
+  { id: '5', scan_run_id: 'demo', task_type: 'cookie_check', status: 'pending', retries: 0, max_retries: 3, attempt_count: 0, max_attempts: 3, output: {}, created_at: '' },
+  { id: '6', scan_run_id: 'demo', task_type: 'exposure_check', status: 'pending', retries: 0, max_retries: 3, attempt_count: 0, max_attempts: 3, output: {}, created_at: '' },
+  { id: '7', scan_run_id: 'demo', task_type: 'perf_baseline', status: 'pending', retries: 0, max_retries: 3, attempt_count: 0, max_attempts: 3, output: {}, created_at: '' },
+  { id: '8', scan_run_id: 'demo', task_type: 'load_ramp_light', status: 'pending', retries: 0, max_retries: 3, attempt_count: 0, max_attempts: 3, output: {}, created_at: '' },
 ];
 
 export default function ScanView() {

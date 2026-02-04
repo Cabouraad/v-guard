@@ -9,11 +9,13 @@ const statusBadgeVariants = cva(
     variants: {
       status: {
         pending: "status-pending",
+        queued: "status-pending",
         running: "status-running",
         paused: "status-pending",
         completed: "status-success",
         failed: "status-error",
         cancelled: "status-error",
+        canceled: "status-error",
         skipped: "bg-muted text-muted-foreground",
       },
     },
@@ -30,26 +32,30 @@ interface StatusBadgeProps extends VariantProps<typeof statusBadgeVariants> {
 
 const statusIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   pending: Clock,
+  queued: Clock,
   running: Loader2,
   paused: Pause,
   completed: Check,
   failed: X,
   cancelled: X,
+  canceled: X,
   skipped: Clock,
 };
 
 const statusLabels: Record<string, string> = {
   pending: 'Pending',
+  queued: 'Queued',
   running: 'Running',
   paused: 'Paused',
   completed: 'Completed',
   failed: 'Failed',
   cancelled: 'Cancelled',
+  canceled: 'Canceled',
   skipped: 'Skipped',
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const Icon = statusIcons[status];
+  const Icon = statusIcons[status] || Clock;
 
   return (
     <span className={cn(statusBadgeVariants({ status }), className)}>
@@ -57,7 +63,7 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
         "w-3 h-3",
         status === 'running' && "animate-spin"
       )} />
-      {statusLabels[status]}
+      {statusLabels[status] || status}
     </span>
   );
 }
