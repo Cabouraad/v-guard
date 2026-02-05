@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
       tier: ent.tier_name,
       price_id: null, // Not exposed to client; tier name is sufficient
       subscription_end: subscriptionEnd,
-      cancel_at_period_end: false, // TODO: expose from get_user_entitlements if needed
+      cancel_at_period_end: ent.cancel_at_period_end ?? false,
       scan_limit: scanLimit,
       scans_used: scansUsed,
       scans_remaining: Math.max(0, scanLimit - scansUsed),

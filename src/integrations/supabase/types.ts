@@ -590,6 +590,7 @@ export type Database = {
         Returns: {
           allow_soak: boolean
           allow_stress: boolean
+          cancel_at_period_end: boolean
           current_period_end: string
           max_concurrency: number
           priority_queue: boolean
