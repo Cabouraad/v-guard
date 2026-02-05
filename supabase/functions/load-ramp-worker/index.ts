@@ -591,6 +591,20 @@ async function runLoadRamp(
 
   // Execute each ramp step
   for (let i = 0; i < safeSchedule.length; i++) {
+    // === HALT CHECK: verify scan hasn't been canceled ===
+    const { data: currentRun } = await supabase
+      .from("scan_runs")
+      .select("status")
+      .eq("id", scan_run_id)
+      .single();
+
+    if (currentRun && ["canceled", "cancelled"].includes(currentRun.status)) {
+      aborted = true;
+      abortReason = "Scan halted by operator";
+      console.log(`[LOAD-RAMP] Scan halted by operator at step ${i + 1}`);
+      break;
+    }
+
     const step = safeSchedule[i];
     console.log(`Executing ramp step ${i + 1}/${safeSchedule.length}: ${step.concurrency} concurrent, ${step.targetRps} RPS`);
 

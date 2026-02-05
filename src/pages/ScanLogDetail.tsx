@@ -1,12 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ScanProgressTimeline, createTimelineSteps } from '@/components/scan/ScanProgressTimeline';
+import { ScanProgressTimeline, createTimelineSteps, TimelineStep } from '@/components/scan/ScanProgressTimeline';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, AlertTriangle, FileText, Lock, Unlock, Globe, ExternalLink } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, FileText, Lock, Unlock, Globe, ExternalLink, OctagonX, User } from 'lucide-react';
 import { format } from 'date-fns';
 import type { ScanRun, ScanTask, Project } from '@/types/database';
 
@@ -63,14 +63,47 @@ export default function ScanLogDetail() {
     );
   }
 
+  // Parse halt audit from error_message if scan was halted
+  const haltAudit = (() => {
+    if (scanRun.status !== 'canceled' || !scanRun.error_message) return null;
+    try {
+      const parsed = JSON.parse(scanRun.error_message);
+      if (parsed.halted_by) return parsed as {
+        halted_by: string;
+        halted_at: string;
+        reason: string;
+        stage_when_halted: string;
+        tasks_canceled: number;
+        tasks_completed_before_halt: number;
+      };
+    } catch { /* not JSON, not a halt audit */ }
+    return null;
+  })();
+
   // Create timeline steps from tasks
   const safetyLocked = !scanRun.allow_advanced_tests;
   const config = scanRun.config as { enable_soak?: boolean; enable_stress?: boolean } | null;
-  const timelineSteps = createTimelineSteps(
+  let timelineSteps = createTimelineSteps(
     tasks || [],
     safetyLocked,
     { soak: config?.enable_soak, stress: config?.enable_stress }
   );
+
+  // Enrich timeline with halt info for canceled scans
+  if (haltAudit) {
+    timelineSteps = timelineSteps.map((step: TimelineStep) => {
+      if (step.status === 'canceled' || (scanRun.status === 'canceled' && step.status === 'pending')) {
+        return {
+          ...step,
+          status: 'canceled' as const,
+          skippedReason: 'operator_halt' as const,
+          haltedBy: haltAudit.halted_by,
+          haltedAt: haltAudit.halted_at,
+        };
+      }
+      return step;
+    });
+  }
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -142,7 +175,7 @@ export default function ScanLogDetail() {
       </Card>
 
       {/* Error Summary */}
-      {scanRun.error_summary && (
+      {scanRun.error_summary && !haltAudit && (
         <Card className="border-severity-critical/30 bg-severity-critical/5">
           <CardHeader className="pb-2">
             <CardTitle className="font-mono text-sm flex items-center gap-2 text-severity-critical">
@@ -157,6 +190,49 @@ export default function ScanLogDetail() {
                 {scanRun.error_message}
               </pre>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Halt Audit Log */}
+      {haltAudit && (
+        <Card className="border-severity-critical/30 bg-severity-critical/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-mono text-sm flex items-center gap-2 text-severity-critical">
+              <OctagonX className="w-4 h-4" />
+              OPERATOR HALT — AUDIT LOG
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+              <div>
+                <span className="text-muted-foreground uppercase tracking-wider">Halted By</span>
+                <p className="mt-0.5 flex items-center gap-1.5 text-foreground">
+                  <User className="w-3 h-3" />
+                  {haltAudit.halted_by}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground uppercase tracking-wider">Timestamp</span>
+                <p className="mt-0.5 text-foreground">
+                  {format(new Date(haltAudit.halted_at), 'MMM d, yyyy HH:mm:ss')}
+                </p>
+              </div>
+              <div>
+                <span className="text-muted-foreground uppercase tracking-wider">Stage When Halted</span>
+                <p className="mt-0.5 text-primary">{haltAudit.stage_when_halted}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground uppercase tracking-wider">Tasks Canceled</span>
+                <p className="mt-0.5 text-foreground">
+                  {haltAudit.tasks_canceled} canceled / {haltAudit.tasks_completed_before_halt} completed
+                </p>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-severity-critical/20">
+              <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Reason</span>
+              <p className="mt-1 text-sm text-foreground">{haltAudit.reason}</p>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -666,6 +666,14 @@ serve(async (req) => {
           );
         }
 
+        // Guard: abort if already halted/canceled
+        if (["canceled", "cancelled", "failed"].includes(scanRun.status)) {
+          return new Response(
+            JSON.stringify({ success: false, error: `Scan is ${scanRun.status}, cannot execute` }),
+            { status: 409, headers: jsonHeaders }
+          );
+        }
+
         const config = scanRun.config as unknown as ScanConfig;
         const circuitBreaker = new CircuitBreaker(5, 30000);
 
@@ -683,8 +691,30 @@ serve(async (req) => {
         const allMetrics: ScanMetric[] = [];
         let hasFailures = false;
 
-        // Execute tasks in order
+        // Execute tasks in order with halt-check between each
         for (const task of tasks || []) {
+          // === HALT CHECK: re-read scan status before each task ===
+          const { data: currentRun } = await supabase
+            .from("scan_runs")
+            .select("status")
+            .eq("id", scanRunId)
+            .single();
+
+          if (currentRun && ["canceled", "cancelled"].includes(currentRun.status)) {
+            // Scan was halted while running — cancel remaining tasks
+            const remainingIds = (tasks || [])
+              .filter(t => ["pending", "failed"].includes(t.status) && t.id !== task.id)
+              .map(t => t.id);
+            
+            if (remainingIds.length > 0) {
+              await supabase
+                .from("scan_tasks")
+                .update({ status: "canceled", error_message: "Scan halted by operator" })
+                .in("id", remainingIds);
+            }
+            break;
+          }
+
           if (!circuitBreaker.canProceed()) {
             // Mark remaining tasks as skipped
             await supabase

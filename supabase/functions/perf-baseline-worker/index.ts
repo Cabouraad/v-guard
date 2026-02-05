@@ -304,6 +304,19 @@ async function storeMetrics(
   }
 }
 
+// Check if a scan has been halted
+async function isScanHalted(
+  supabase: ReturnType<typeof createClient>,
+  scanRunId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("scan_runs")
+    .select("status")
+    .eq("id", scanRunId)
+    .single();
+  return data ? ["canceled", "cancelled"].includes(data.status) : false;
+}
+
 // Main worker function
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function runPerfBaseline(
@@ -366,6 +379,11 @@ async function runPerfBaseline(
 
   // Sample each endpoint
   for (const endpoint of sortedEndpoints) {
+    // === HALT CHECK before each endpoint ===
+    if (await isScanHalted(supabase, scan_run_id)) {
+      break;
+    }
+
     const endpointSamples: LatencySample[] = [];
 
     for (let i = 0; i < samplesPerEndpoint; i++) {
