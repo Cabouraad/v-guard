@@ -2,15 +2,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import Dashboard from "@/pages/Dashboard";
+import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
+import Landing from "@/pages/Landing";
+import DashboardOverview from "@/pages/dashboard/DashboardOverview";
+import ScansView from "@/pages/dashboard/ScansView";
+import LoadTestingView from "@/pages/dashboard/LoadTestingView";
 import Projects from "@/pages/Projects";
 import NewProject from "@/pages/NewProject";
-import Scans from "@/pages/Scans";
 import ScanView from "@/pages/ScanView";
 import Report from "@/pages/Report";
- import Landing from "@/pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,17 +24,27 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-           <Route path="/" element={<Landing />} />
-          <Route element={<AppLayout />}>
-             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/projects/new" element={<NewProject />} />
-            <Route path="/scans" element={<Scans />} />
-            <Route path="/scans/:scanId" element={<ScanView />} />
-            <Route path="/reports" element={<Report />} />
-            <Route path="/reports/:reportId" element={<Report />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
+            {/* Marketing landing page */}
+            <Route path="/" element={<Landing />} />
+            
+            {/* Dashboard with nav rail */}
+            <Route path="/dashboard" element={<DashboardLayout />}>
+              <Route index element={<DashboardOverview />} />
+              <Route path="scans" element={<ScansView />} />
+              <Route path="load" element={<LoadTestingView />} />
+              <Route path="reports" element={<Navigate to="/dashboard" replace />} />
+              <Route path="settings" element={<Navigate to="/dashboard" replace />} />
+            </Route>
+
+            {/* App routes with sidebar layout */}
+            <Route element={<AppLayout />}>
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/new" element={<NewProject />} />
+              <Route path="/scans/:scanId" element={<ScanView />} />
+              <Route path="/reports/:reportId" element={<Report />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
