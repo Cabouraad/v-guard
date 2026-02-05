@@ -1,4 +1,5 @@
  import { useState } from 'react';
+ import { useEvidencePanel } from '@/components/evidence';
  import { 
    Circle, 
    Loader2, 
@@ -110,9 +111,15 @@
    className 
  }: ScanProgressTimelineProps) {
    const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+   const { openPanel } = useEvidencePanel();
  
    const handleStepClick = (step: TimelineStep) => {
      setSelectedStepId(step.id === selectedStepId ? null : step.id);
+     // Open evidence panel filtered to this module
+     openPanel({
+       tab: 'logs',
+       filter: { moduleKey: step.moduleKey, taskType: step.moduleKey }
+     });
      onStepClick?.(step);
    };
  

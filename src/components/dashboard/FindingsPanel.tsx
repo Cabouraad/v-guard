@@ -1,6 +1,7 @@
  import { useState } from 'react';
- import { ChevronDown, ChevronRight, ExternalLink, Copy, Check } from 'lucide-react';
+ import { ChevronDown, ChevronRight, FileSearch, Copy, Check } from 'lucide-react';
  import { cn } from '@/lib/utils';
+ import { useEvidencePanel } from '@/components/evidence';
  import type { SeverityLevel } from '@/types/database';
  
  interface Finding {
@@ -121,7 +122,7 @@
            }}
            className="p-1 text-muted-foreground hover:text-foreground transition-colors"
          >
-           <ExternalLink className="w-4 h-4" />
+           <FileSearch className="w-4 h-4" />
          </button>
        </button>
  
@@ -186,6 +187,7 @@
  
  export function FindingsPanel({ onSelectFinding }: FindingsPanelProps) {
    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(['1']));
+   const { openPanel } = useEvidencePanel();
  
    const toggleExpanded = (id: string) => {
      setExpandedIds(prev => {
@@ -217,7 +219,13 @@
              finding={finding}
              isExpanded={expandedIds.has(finding.id)}
              onToggle={() => toggleExpanded(finding.id)}
-             onSelect={() => onSelectFinding?.(finding.id)}
+             onSelect={() => {
+               openPanel({ 
+                 tab: 'evidence', 
+                 filter: { findingId: finding.id } 
+               });
+               onSelectFinding?.(finding.id);
+             }}
            />
          ))}
        </div>
