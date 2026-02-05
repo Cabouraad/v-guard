@@ -53,7 +53,7 @@ export default function ScanLog() {
               {scanRuns.map((run) => (
                 <Link
                   key={run.id}
-                  to={`/scan-log/${run.id}`}
+                  to={`/dashboard/scan-log/${run.id}`}
                   className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,12 +13,13 @@ const navLinks = [
 export function SiteNav() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleAuthorizeScan = () => {
     if (user) {
-      navigate('/projects/new');
+      navigate('/dashboard/targets/new');
     } else {
-      navigate('/auth', { state: { from: '/projects/new' } });
+      navigate('/auth', { state: { from: '/dashboard/targets/new' } });
     }
   };
 
@@ -49,7 +50,7 @@ export function SiteNav() {
           
           <div className="flex items-center gap-3">
             {user ? (
-              <Link to="/projects">
+              <Link to="/dashboard/targets">
                 <Button 
                   variant="outline" 
                   size="sm" 

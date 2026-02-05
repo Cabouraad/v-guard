@@ -10,9 +10,9 @@ export default function Landing() {
 
   const handleAuthorizeScan = () => {
     if (user) {
-      navigate('/projects/new');
+      navigate('/dashboard/targets/new');
     } else {
-      navigate('/auth', { state: { from: '/projects/new' } });
+      navigate('/auth', { state: { from: '/dashboard/targets/new' } });
     }
   };
 
