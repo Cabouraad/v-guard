@@ -17,6 +17,7 @@ import Report from "@/pages/Report";
  import { SafetyLockProvider } from "@/components/safety";
  import { EvidencePanelProvider, EvidencePanel } from "@/components/evidence";
  import { CommandPaletteProvider, CommandPalette, ShortcutsCheatSheet, GlobalKeyboardShortcuts } from "@/components/command";
+import { RunWindowProvider } from "@/components/scheduling";
 
 const queryClient = new QueryClient();
 
@@ -24,42 +25,44 @@ const queryClient = new QueryClient();
    <QueryClientProvider client={queryClient}>
      <TooltipProvider>
        <SafetyLockProvider>
-         <EvidencePanelProvider>
-           <BrowserRouter>
-             <CommandPaletteProvider>
-               <Toaster />
-               <Sonner />
-               <GlobalKeyboardShortcuts />
-               <Routes>
-                 {/* Marketing landing page */}
-                 <Route path="/" element={<Landing />} />
-                 
-                 {/* Dashboard with nav rail */}
-                 <Route path="/dashboard" element={<DashboardLayout />}>
-                   <Route index element={<DashboardOverview />} />
-                   <Route path="scans" element={<ScansView />} />
-                   <Route path="load" element={<LoadTestingView />} />
-                   <Route path="reports" element={<Navigate to="/dashboard" replace />} />
-                   <Route path="settings" element={<Navigate to="/dashboard" replace />} />
-                 </Route>
+        <RunWindowProvider>
+          <EvidencePanelProvider>
+            <BrowserRouter>
+              <CommandPaletteProvider>
+                <Toaster />
+                <Sonner />
+                <GlobalKeyboardShortcuts />
+                <Routes>
+                  {/* Marketing landing page */}
+                  <Route path="/" element={<Landing />} />
+                  
+                  {/* Dashboard with nav rail */}
+                  <Route path="/dashboard" element={<DashboardLayout />}>
+                    <Route index element={<DashboardOverview />} />
+                    <Route path="scans" element={<ScansView />} />
+                    <Route path="load" element={<LoadTestingView />} />
+                    <Route path="reports" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="settings" element={<Navigate to="/dashboard" replace />} />
+                  </Route>
  
-                 {/* App routes with sidebar layout */}
-                 <Route element={<AppLayout />}>
-                   <Route path="/projects" element={<Projects />} />
-                   <Route path="/projects/new" element={<NewProject />} />
-                   <Route path="/scans/:scanId" element={<ScanView />} />
-                   <Route path="/reports/:reportId" element={<Report />} />
-                 </Route>
-                 
-                 <Route path="*" element={<NotFound />} />
-               </Routes>
-               {/* Global Overlays */}
-               <CommandPalette />
-               <ShortcutsCheatSheet />
-               <EvidencePanel />
-             </CommandPaletteProvider>
-           </BrowserRouter>
-         </EvidencePanelProvider>
+                  {/* App routes with sidebar layout */}
+                  <Route element={<AppLayout />}>
+                    <Route path="/projects" element={<Projects />} />
+                    <Route path="/projects/new" element={<NewProject />} />
+                    <Route path="/scans/:scanId" element={<ScanView />} />
+                    <Route path="/reports/:reportId" element={<Report />} />
+                  </Route>
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+                {/* Global Overlays */}
+                <CommandPalette />
+                <ShortcutsCheatSheet />
+                <EvidencePanel />
+              </CommandPaletteProvider>
+            </BrowserRouter>
+          </EvidencePanelProvider>
+        </RunWindowProvider>
        </SafetyLockProvider>
      </TooltipProvider>
    </QueryClientProvider>

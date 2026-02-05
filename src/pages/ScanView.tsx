@@ -16,6 +16,7 @@ import { HaltScanDialog } from '@/components/scan/HaltScanDialog';
  } from 'lucide-react';
  import type { ScanTask, ScanStatus } from '@/types/database';
  import { ScanSafetyBadge, useSafetyLock } from '@/components/safety';
+import { useRunWindow, WindowStatusBadge } from '@/components/scheduling';
  import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
  
@@ -42,6 +43,7 @@ import { toast } from 'sonner';
    const [elapsedTime, setElapsedTime] = useState(0);
    const [scores, setScores] = useState({ security: 0, reliability: 0 });
    const { state: safetyState, getAuditString } = useSafetyLock();
+  const { window: runWindow, isWithinWindow, formatNextWindowOpen } = useRunWindow();
   const [haltDialogOpen, setHaltDialogOpen] = useState(false);
   const [haltInfo, setHaltInfo] = useState<{
     reason?: string;
@@ -49,6 +51,9 @@ import { toast } from 'sonner';
     haltedBy?: string;
     stageWhenHalted?: string;
   } | null>(null);
+
+  // Check if scan should be queued due to window
+  const isQueuedForWindow = runWindow.enabled && !isWithinWindow() && scanStatus === 'running';
 
   // Get current running stage
   const getCurrentStage = useCallback(() => {
@@ -225,15 +230,23 @@ import { toast } from 'sonner';
                    enabledModules={safetyState.enabledModules}
                    size="md"
                  />
-                 <StatusBadge status={scanStatus} />
+                {isQueuedForWindow ? (
+                  <WindowStatusBadge />
+                ) : (
+                  <StatusBadge status={scanStatus} />
+                )}
                  <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
                    <Clock className="w-3.5 h-3.5" />
-                   {formatTime(elapsedTime)}
+                  {isQueuedForWindow ? (
+                    <span className="text-severity-medium">{formatNextWindowOpen()}</span>
+                  ) : (
+                    formatTime(elapsedTime)
+                  )}
                  </div>
                </div>
  
                <div className="flex items-center gap-2">
-                 {scanStatus === 'running' && (
+                {scanStatus === 'running' && !isQueuedForWindow && (
                    <>
                      <Button variant="outline" size="sm" className="gap-1.5 font-mono text-[10px]">
                        <Pause className="w-3 h-3" />
@@ -250,6 +263,23 @@ import { toast } from 'sonner';
                      </Button>
                    </>
                  )}
+                {isQueuedForWindow && (
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" className="gap-1.5 font-mono text-[10px]">
+                      <RefreshCw className="w-3 h-3" />
+                      FORCE START
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="gap-1.5 font-mono text-[10px] text-severity-critical"
+                      onClick={() => setHaltDialogOpen(true)}
+                    >
+                      <OctagonX className="w-3 h-3" />
+                      CANCEL
+                    </Button>
+                  </div>
+                )}
               {scanStatus === 'canceled' && haltInfo && (
                 <>
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-severity-critical/10 border border-severity-critical/20 rounded-sm">
