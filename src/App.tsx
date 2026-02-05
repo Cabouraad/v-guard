@@ -10,6 +10,7 @@ import NewProject from "@/pages/NewProject";
 import Scans from "@/pages/Scans";
 import ScanView from "@/pages/ScanView";
 import Report from "@/pages/Report";
+ import Landing from "@/pages/Landing";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,8 +22,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+           <Route path="/" element={<Landing />} />
           <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
+             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/new" element={<NewProject />} />
             <Route path="/scans" element={<Scans />} />
