@@ -1,10 +1,16 @@
- import { Link } from 'react-router-dom';
- import { ChevronRight, Check } from 'lucide-react';
+ import { useState } from 'react';
+ import { Link, useNavigate } from 'react-router-dom';
+ import { ChevronRight, Check, Loader2, Settings } from 'lucide-react';
  import { Button } from '@/components/ui/button';
  import { SiteNav, SiteFooter } from '@/components/marketing';
+ import { useSubscription } from '@/hooks/useSubscription';
+ import { SUBSCRIPTION_TIERS, SubscriptionTier } from '@/lib/subscription';
+ import { supabase } from '@/integrations/supabase/client';
+ import { toast } from 'sonner';
  
- const tiers = [
+ const tierConfigs = [
    {
+     key: 'standard' as SubscriptionTier,
      name: 'Standard',
      price: '$49',
      period: '/mo',
@@ -17,10 +23,10 @@
        '30-day artifact retention',
        'Conservative concurrency cap; cooldown enforced',
      ],
-     cta: 'AUTHORIZE A SCAN',
      highlighted: false,
    },
    {
+     key: 'production' as SubscriptionTier,
      name: 'Production',
      price: '$199',
      period: '/mo',
@@ -33,12 +39,48 @@
        '180-day artifact retention',
        'Priority execution',
      ],
-     cta: 'AUTHORIZE A SCAN',
      highlighted: true,
    },
  ];
  
  export default function Pricing() {
+   const navigate = useNavigate();
+   const { subscription, loading: subLoading, createCheckout, openPortal } = useSubscription();
+   const [checkingOut, setCheckingOut] = useState<SubscriptionTier | null>(null);
+   const [openingPortal, setOpeningPortal] = useState(false);
+ 
+   const handleSubscribe = async (tier: SubscriptionTier) => {
+     try {
+       // Check if user is logged in
+       const { data: session } = await supabase.auth.getSession();
+       if (!session.session) {
+         toast.error('Please sign in to subscribe');
+         navigate('/auth');
+         return;
+       }
+ 
+       setCheckingOut(tier);
+       await createCheckout(tier);
+     } catch (err) {
+       const message = err instanceof Error ? err.message : 'Checkout failed';
+       toast.error(message);
+     } finally {
+       setCheckingOut(null);
+     }
+   };
+ 
+   const handleManageSubscription = async () => {
+     try {
+       setOpeningPortal(true);
+       await openPortal();
+     } catch (err) {
+       const message = err instanceof Error ? err.message : 'Failed to open portal';
+       toast.error(message);
+     } finally {
+       setOpeningPortal(false);
+     }
+   };
+ 
    return (
      <div className="min-h-screen bg-background text-foreground">
        <SiteNav />
@@ -53,6 +95,20 @@
            <p className="text-muted-foreground text-sm leading-relaxed max-w-xl mx-auto">
              Two tiers. No hidden fees. Heavy testing is gated and auditable.
            </p>
+           
+           {/* Current Plan Badge */}
+           {subscription.subscribed && subscription.tier && (
+             <div className="mt-6 inline-flex items-center gap-2 px-3 py-1.5 border border-primary/30 bg-primary/10">
+               <span className="text-[10px] font-mono text-primary tracking-wider">
+                 CURRENT PLAN: {subscription.tier.toUpperCase()}
+               </span>
+               {subscription.subscription_end && (
+                 <span className="text-[10px] font-mono text-muted-foreground">
+                   • Renews {new Date(subscription.subscription_end).toLocaleDateString()}
+                 </span>
+               )}
+             </div>
+           )}
          </div>
        </section>
  
@@ -60,15 +116,28 @@
        <section className="py-12 px-6">
          <div className="max-w-4xl mx-auto">
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             {tiers.map((tier) => (
+             {tierConfigs.map((tier) => {
+               const isCurrentPlan = subscription.subscribed && subscription.tier === tier.key;
+               const isLoading = checkingOut === tier.key;
+               
+               return (
                <div
-                 key={tier.name}
+                 key={tier.key}
                  className={`border p-6 ${
-                   tier.highlighted
+                   isCurrentPlan
+                     ? 'border-primary bg-primary/10 ring-1 ring-primary/30'
+                     : tier.highlighted
                      ? 'border-primary/50 bg-primary/5'
                      : 'border-border/50 bg-card/30'
                  }`}
                >
+                 {isCurrentPlan && (
+                   <div className="mb-4 -mt-2">
+                     <span className="text-[9px] font-mono tracking-widest text-primary bg-primary/20 px-2 py-0.5">
+                       YOUR PLAN
+                     </span>
+                   </div>
+                 )}
                  <div className="mb-6">
                    <h2 className="text-sm font-mono tracking-wider mb-2">{tier.name.toUpperCase()}</h2>
                    <div className="flex items-baseline gap-1">
@@ -89,7 +158,26 @@
                    ))}
                  </div>
  
-                 <Link to="/projects/new">
+                 {isCurrentPlan ? (
+                   <Button
+                     variant="outline"
+                     className="w-full font-mono text-[11px] rounded-sm h-10 border-primary/50 hover:bg-primary/10"
+                     onClick={handleManageSubscription}
+                     disabled={openingPortal}
+                   >
+                     {openingPortal ? (
+                       <>
+                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                         OPENING PORTAL...
+                       </>
+                     ) : (
+                       <>
+                         <Settings className="w-4 h-4 mr-2" />
+                         MANAGE SUBSCRIPTION
+                       </>
+                     )}
+                   </Button>
+                 ) : (
                    <Button
                      variant={tier.highlighted ? 'default' : 'outline'}
                      className={`w-full font-mono text-[11px] rounded-sm h-10 ${
@@ -97,13 +185,25 @@
                          ? 'bg-primary hover:bg-primary/90'
                          : 'border-border hover:bg-muted/30'
                      }`}
+                     onClick={() => handleSubscribe(tier.key)}
+                     disabled={isLoading || subLoading}
                    >
-                     {tier.cta}
-                     <ChevronRight className="w-4 h-4 ml-1" />
+                     {isLoading ? (
+                       <>
+                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                         AUTHORIZING...
+                       </>
+                     ) : (
+                       <>
+                         SUBSCRIBE
+                         <ChevronRight className="w-4 h-4 ml-1" />
+                       </>
+                     )}
                    </Button>
-                 </Link>
+                 )}
                </div>
-             ))}
+               );
+             })}
            </div>
  
            {/* Note */}
