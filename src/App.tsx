@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import Landing from "@/pages/Landing";
+ import Safety from "@/pages/Safety";
+ import Pricing from "@/pages/Pricing";
+ import FAQ from "@/pages/FAQ";
 import DashboardOverview from "@/pages/dashboard/DashboardOverview";
 import ScansView from "@/pages/dashboard/ScansView";
 import LoadTestingView from "@/pages/dashboard/LoadTestingView";
@@ -35,6 +38,9 @@ const queryClient = new QueryClient();
                 <Routes>
                   {/* Marketing landing page */}
                   <Route path="/" element={<Landing />} />
+                   <Route path="/safety" element={<Safety />} />
+                   <Route path="/pricing" element={<Pricing />} />
+                   <Route path="/faq" element={<FAQ />} />
                   
                   {/* Dashboard with nav rail */}
                   <Route path="/dashboard" element={<DashboardLayout />}>

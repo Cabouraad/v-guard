@@ -1,354 +1,284 @@
- import { useState, useEffect } from 'react';
  import { Link } from 'react-router-dom';
- import { Shield, Terminal, Activity, Lock, ChevronRight, Zap, AlertTriangle } from 'lucide-react';
+ import { ChevronRight, Fingerprint, ShieldCheck, Activity, FileText, Check, X } from 'lucide-react';
  import { Button } from '@/components/ui/button';
- 
- // Simulated live metrics for hero
- function useSimulatedMetrics() {
-   const [metrics, setMetrics] = useState({
-     scansCompleted: 12847,
-     findingsDetected: 3219,
-     avgResponseMs: 47,
-     uptime: 99.97,
-   });
- 
-   useEffect(() => {
-     const interval = setInterval(() => {
-       setMetrics(prev => ({
-         scansCompleted: prev.scansCompleted + Math.floor(Math.random() * 3),
-         findingsDetected: prev.findingsDetected + (Math.random() > 0.7 ? 1 : 0),
-         avgResponseMs: 45 + Math.floor(Math.random() * 8),
-         uptime: 99.97,
-       }));
-     }, 2000);
-     return () => clearInterval(interval);
-   }, []);
- 
-   return metrics;
- }
+ import { SiteNav, SiteFooter, ScanTranscript } from '@/components/marketing';
  
  export default function Landing() {
-   const metrics = useSimulatedMetrics();
-   const [terminalLine, setTerminalLine] = useState(0);
- 
-   const terminalOutput = [
-     '$ vibe-sec analyze --target https://app.example.com',
-     '[00:00:01] Initializing passive reconnaissance...',
-     '[00:00:03] TLS configuration: Grade A',
-     '[00:00:05] Security headers: 7/9 implemented',
-     '[00:00:08] CORS policy: Restrictive ✓',
-     '[00:00:12] Load baseline: p95 = 142ms @ 10 RPS',
-     '[00:00:18] Ramp test: Stable through 50 concurrent',
-     '[00:00:24] Analysis complete. 2 findings. Report ready.',
-   ];
- 
-   useEffect(() => {
-     if (terminalLine < terminalOutput.length) {
-       const timeout = setTimeout(() => {
-         setTerminalLine(prev => prev + 1);
-       }, 800);
-       return () => clearTimeout(timeout);
-     }
-   }, [terminalLine, terminalOutput.length]);
- 
    return (
      <div className="min-h-screen bg-background text-foreground">
-       {/* Navigation */}
-       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm">
-         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-           <div className="flex items-center gap-2">
-             <Shield className="w-5 h-5 text-primary" />
-             <span className="font-mono text-sm tracking-tight">VIBE_SEC</span>
-           </div>
-           <div className="flex items-center gap-6">
-             <a href="#process" className="text-xs text-muted-foreground hover:text-foreground transition-colors font-mono">PROCESS</a>
-             <a href="#guarantees" className="text-xs text-muted-foreground hover:text-foreground transition-colors font-mono">GUARANTEES</a>
-             <a href="#specs" className="text-xs text-muted-foreground hover:text-foreground transition-colors font-mono">SPECS</a>
-             <Link to="/projects/new">
-               <Button variant="outline" size="sm" className="font-mono text-xs rounded-sm h-8 border-primary/50 hover:border-primary hover:bg-primary/10">
-                 AUTHORIZE SCAN
-               </Button>
-             </Link>
-           </div>
-         </div>
-       </nav>
+       <SiteNav />
  
-       {/* Hero - Asymmetric Layout */}
-       <section className="pt-24 pb-20 px-6">
+       {/* HERO */}
+       <section className="pt-24 pb-16 px-6">
          <div className="max-w-7xl mx-auto">
-           <div className="grid grid-cols-12 gap-8 items-start">
-             {/* Left: Headline & Metrics */}
-             <div className="col-span-5 pt-12">
-               <div className="mb-6">
-                 <span className="inline-block px-2 py-1 bg-primary/10 border border-primary/30 text-primary text-[10px] font-mono tracking-widest rounded-sm">
-                   SECURITY + LOAD ANALYSIS
-                 </span>
-               </div>
-               
-               <h1 className="text-4xl font-mono font-light tracking-tight leading-tight mb-6">
-                 Automated security posture assessment for{' '}
-                 <span className="text-primary">vibe-coded</span> applications
+           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+             {/* Left: Headline */}
+             <div className="lg:col-span-5 pt-8">
+               <h1 className="text-3xl md:text-4xl font-mono font-light tracking-tight leading-tight mb-6">
+                 Security and Load Testing — Without Guesswork or Risk
                </h1>
                
-               <p className="text-muted-foreground text-sm leading-relaxed mb-10 max-w-md">
-                 Deterministic analysis of TLS, headers, authentication flows, 
-                 and load resilience. No exploitation. No data exfiltration. 
-                 Evidence-backed findings with actionable remediation.
+               <p className="text-muted-foreground text-sm leading-relaxed mb-4">
+                 Analyze how your application behaves under attack and under load, 
+                 using safety-first scans designed for modern, AI-built software.
+               </p>
+               
+               <p className="text-[11px] font-mono text-muted-foreground/80 mb-10">
+                 Read-only by default. Production-safe. Evidence-backed.
                </p>
  
-               {/* Live Metrics Grid */}
-               <div className="grid grid-cols-2 gap-4 mb-10">
-                 <div className="p-4 border border-border/50 bg-card/30">
-                   <div className="text-2xl font-mono text-foreground">{metrics.scansCompleted.toLocaleString()}</div>
-                   <div className="text-[10px] font-mono text-muted-foreground tracking-wider mt-1">SCANS COMPLETED</div>
-                 </div>
-                 <div className="p-4 border border-border/50 bg-card/30">
-                   <div className="text-2xl font-mono text-foreground">{metrics.findingsDetected.toLocaleString()}</div>
-                   <div className="text-[10px] font-mono text-muted-foreground tracking-wider mt-1">FINDINGS DETECTED</div>
-                 </div>
-                 <div className="p-4 border border-border/50 bg-card/30">
-                   <div className="text-2xl font-mono text-foreground">{metrics.avgResponseMs}ms</div>
-                   <div className="text-[10px] font-mono text-muted-foreground tracking-wider mt-1">AVG RESPONSE</div>
-                 </div>
-                 <div className="p-4 border border-border/50 bg-card/30">
-                   <div className="text-2xl font-mono text-foreground">{metrics.uptime}%</div>
-                   <div className="text-[10px] font-mono text-muted-foreground tracking-wider mt-1">PLATFORM UPTIME</div>
-                 </div>
+               <div className="flex flex-col sm:flex-row gap-3">
+                 <Link to="/projects/new">
+                   <Button className="font-mono text-[11px] rounded-sm h-10 px-6 bg-primary hover:bg-primary/90 w-full sm:w-auto">
+                     AUTHORIZE A SCAN
+                     <ChevronRight className="w-4 h-4 ml-1" />
+                   </Button>
+                 </Link>
+                 <Link to="/safety">
+                   <Button variant="outline" className="font-mono text-[11px] rounded-sm h-10 px-6 border-border hover:bg-muted/30 w-full sm:w-auto">
+                     VIEW SAFETY CONTROLS
+                   </Button>
+                 </Link>
                </div>
- 
-               <Link to="/projects/new">
-                 <Button className="font-mono text-xs rounded-sm h-10 px-6 bg-primary hover:bg-primary/90">
-                   AUTHORIZE SCAN
-                   <ChevronRight className="w-4 h-4 ml-1" />
-                 </Button>
-               </Link>
              </div>
  
-             {/* Right: Terminal Simulation */}
-             <div className="col-span-7 pt-4">
-               <div className="border border-border/50 bg-card/20 rounded-sm overflow-hidden">
-                 <div className="flex items-center gap-2 px-4 py-2 border-b border-border/50 bg-card/30">
-                   <div className="w-2 h-2 rounded-full bg-severity-critical/60" />
-                   <div className="w-2 h-2 rounded-full bg-severity-medium/60" />
-                   <div className="w-2 h-2 rounded-full bg-status-success/60" />
-                   <span className="text-[10px] font-mono text-muted-foreground ml-2">scan_output.log</span>
+             {/* Right: Scan Transcript */}
+             <div className="lg:col-span-7">
+               <ScanTranscript />
+             </div>
+           </div>
+         </div>
+       </section>
+ 
+       {/* VALUE STATEMENT */}
+       <section className="py-8 px-6 border-y border-border/30 bg-muted/10">
+         <div className="max-w-4xl mx-auto text-center">
+           <p className="text-sm font-mono text-foreground/90">
+             This tool performs both security analysis and load testing, sequenced and gated to avoid harming production systems.
+           </p>
+         </div>
+       </section>
+ 
+       {/* WHAT IT DOES - 3 sections, not card grid */}
+       <section className="py-20 px-6">
+         <div className="max-w-7xl mx-auto">
+           <div className="mb-12">
+             <span className="text-[10px] font-mono text-muted-foreground tracking-widest">CAPABILITIES</span>
+             <h2 className="text-2xl font-mono font-light mt-2">What It Does</h2>
+           </div>
+ 
+           <div className="space-y-16">
+             {/* Section 1 */}
+             <div className="grid grid-cols-12 gap-8 items-start">
+               <div className="col-span-12 md:col-span-3">
+                 <div className="flex items-center gap-3 mb-2">
+                   <div className="w-8 h-8 border border-border bg-card flex items-center justify-center rounded-sm">
+                     <ShieldCheck className="w-4 h-4 text-primary" />
+                   </div>
+                   <span className="text-[10px] font-mono text-primary tracking-wider">01</span>
                  </div>
-                 <div className="p-4 font-mono text-xs leading-relaxed min-h-[320px]">
-                   {terminalOutput.slice(0, terminalLine).map((line, i) => (
-                     <div 
-                       key={i} 
-                       className={`mb-1 ${
-                         line.includes('✓') ? 'text-status-success' :
-                         line.includes('complete') ? 'text-primary' :
-                         line.startsWith('$') ? 'text-foreground' :
-                         'text-muted-foreground'
-                       }`}
-                     >
-                       {line}
-                     </div>
-                   ))}
-                   {terminalLine < terminalOutput.length && (
-                     <span className="inline-block w-2 h-4 bg-primary animate-pulse" />
-                   )}
+                 <h3 className="text-sm font-mono tracking-wide">SECURITY ANALYSIS</h3>
+               </div>
+               <div className="col-span-12 md:col-span-9">
+                 <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">
+                   Identify configuration flaws, authentication weaknesses, and unsafe exposure — using non-destructive checks tailored to modern web apps.
+                 </p>
+               </div>
+             </div>
+ 
+             {/* Section 2 */}
+             <div className="grid grid-cols-12 gap-8 items-start">
+               <div className="col-span-12 md:col-span-3">
+                 <div className="flex items-center gap-3 mb-2">
+                   <div className="w-8 h-8 border border-border bg-card flex items-center justify-center rounded-sm">
+                     <Activity className="w-4 h-4 text-primary" />
+                   </div>
+                   <span className="text-[10px] font-mono text-primary tracking-wider">02</span>
                  </div>
+                 <h3 className="text-sm font-mono tracking-wide">LOAD TESTING</h3>
+               </div>
+               <div className="col-span-12 md:col-span-9">
+                 <p className="text-muted-foreground text-sm leading-relaxed max-w-2xl">
+                   Measure how your application behaves as real traffic increases — from baseline performance to controlled load ramps and recovery behavior.
+                 </p>
+               </div>
+             </div>
+ 
+             {/* Section 3 - The Difference */}
+             <div className="grid grid-cols-12 gap-8 items-start border-t border-border/30 pt-16">
+               <div className="col-span-12 md:col-span-3">
+                 <div className="flex items-center gap-3 mb-2">
+                   <div className="w-8 h-8 border border-primary/50 bg-primary/10 flex items-center justify-center rounded-sm">
+                     <span className="text-primary text-xs font-mono">≠</span>
+                   </div>
+                 </div>
+                 <h3 className="text-sm font-mono tracking-wide text-primary">THE DIFFERENCE</h3>
+               </div>
+               <div className="col-span-12 md:col-span-9">
+                 <p className="text-foreground text-sm leading-relaxed max-w-2xl">
+                   Security findings directly inform load tests, so you see where risk and failure intersect — not two disconnected reports.
+                 </p>
                </div>
              </div>
            </div>
          </div>
        </section>
  
-       {/* Process Timeline - Linear Flow */}
-       <section id="process" className="py-24 px-6 border-t border-border/30">
+       {/* SAFETY-FIRST BLOCK */}
+       <section className="py-20 px-6 border-t border-border/30 bg-card/20">
+         <div className="max-w-7xl mx-auto">
+           <div className="grid grid-cols-12 gap-12">
+             <div className="col-span-12 md:col-span-4">
+               <span className="text-[10px] font-mono text-muted-foreground tracking-widest">TRUST MODEL</span>
+               <h2 className="text-2xl font-mono font-light mt-2 mb-6">Built for Production Reality</h2>
+             </div>
+ 
+             <div className="col-span-12 md:col-span-8">
+               <p className="text-sm text-muted-foreground leading-relaxed mb-8">
+                 This is not a blind penetration test or an unlimited stress tool.
+                 Every scan follows explicit guardrails:
+               </p>
+ 
+               <div className="space-y-3 mb-8">
+                 {[
+                   'Read-only by default',
+                   'Rate-limited requests',
+                   'Environment-aware testing',
+                   'User-defined exclusions',
+                   'Immediate halt controls',
+                 ].map((item, i) => (
+                   <div key={i} className="flex items-center gap-3">
+                     <div className="w-1 h-1 bg-primary rounded-full" />
+                     <span className="text-sm text-foreground">{item}</span>
+                   </div>
+                 ))}
+               </div>
+ 
+               <p className="text-sm text-foreground font-mono">
+                 You decide how far a scan goes — nothing runs implicitly.
+               </p>
+             </div>
+           </div>
+         </div>
+       </section>
+ 
+       {/* HOW IT WORKS - Timeline */}
+       <section className="py-20 px-6 border-t border-border/30">
          <div className="max-w-7xl mx-auto">
            <div className="mb-16">
-             <span className="text-[10px] font-mono text-muted-foreground tracking-widest">ANALYSIS SEQUENCE</span>
-             <h2 className="text-2xl font-mono font-light mt-2">How the scan executes</h2>
+             <span className="text-[10px] font-mono text-muted-foreground tracking-widest">EXECUTION SEQUENCE</span>
+             <h2 className="text-2xl font-mono font-light mt-2">How It Works</h2>
            </div>
  
            <div className="relative">
-             {/* Vertical line */}
              <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border/50" />
  
-             {/* Timeline items */}
-             <div className="space-y-12">
+             <div className="space-y-10">
                {[
-                 {
-                   phase: '01',
-                   title: 'PASSIVE RECONNAISSANCE',
-                   duration: '~5 seconds',
-                   description: 'TLS certificate analysis, security header enumeration, technology fingerprinting. No traffic generated beyond standard HTTP.',
-                   icon: Terminal,
-                 },
-                 {
-                   phase: '02',
-                   title: 'CONFIGURATION AUDIT',
-                   duration: '~15 seconds',
-                   description: 'CORS policy validation, cookie attribute inspection, CSP directive parsing. Read-only analysis of response characteristics.',
-                   icon: Lock,
-                 },
-                 {
-                   phase: '03',
-                   title: 'BASELINE MEASUREMENT',
-                   duration: '~30 seconds',
-                   description: 'Response time profiling at minimal load. Establishes p50/p95/p99 latency metrics. Rate-limited to 10 RPS.',
-                   icon: Activity,
-                 },
-                 {
-                   phase: '04',
-                   title: 'CONTROLLED RAMP',
-                   duration: '~2 minutes',
-                   description: 'Gradual concurrency increase with automatic backoff. Identifies breaking points without causing sustained degradation.',
-                   icon: Zap,
-                 },
-                 {
-                   phase: '05',
-                   title: 'REPORT SYNTHESIS',
-                   duration: '~10 seconds',
-                   description: 'Finding aggregation, severity classification, remediation prompt generation. Executive summary with tested/not-tested matrix.',
-                   icon: Shield,
-                 },
-               ].map((item, index) => (
-                 <div key={index} className="relative pl-12">
+                 { step: '01', title: 'Fingerprints your app', icon: Fingerprint },
+                 { step: '02', title: 'Identifies security-sensitive surfaces', icon: ShieldCheck },
+                 { step: '03', title: 'Applies load testing to those same surfaces', icon: Activity },
+                 { step: '04', title: 'Reports correlated failure modes', icon: FileText },
+               ].map((item) => (
+                 <div key={item.step} className="relative pl-12">
                    <div className="absolute left-0 w-8 h-8 border border-border bg-card flex items-center justify-center rounded-sm">
                      <item.icon className="w-4 h-4 text-primary" />
                    </div>
-                   <div className="flex items-baseline gap-4 mb-2">
-                     <span className="text-[10px] font-mono text-primary">{item.phase}</span>
-                     <h3 className="text-sm font-mono tracking-wide">{item.title}</h3>
-                     <span className="text-[10px] font-mono text-muted-foreground">{item.duration}</span>
+                   <div className="flex items-baseline gap-4">
+                     <span className="text-[10px] font-mono text-primary">{item.step}</span>
+                     <span className="text-sm font-mono text-foreground">{item.title}</span>
                    </div>
-                   <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                     {item.description}
-                   </p>
                  </div>
                ))}
+             </div>
+ 
+             {/* Example callout */}
+             <div className="mt-12 ml-12 p-4 border border-border/50 bg-muted/20 rounded-sm max-w-xl">
+               <span className="text-[10px] font-mono text-muted-foreground tracking-wider">EXAMPLE OUTPUT</span>
+               <p className="text-sm text-foreground mt-2 font-mono">
+                 "This endpoint slows under load — and also lacks rate limiting."
+               </p>
              </div>
            </div>
          </div>
        </section>
  
-       {/* Safety Guarantees */}
-       <section id="guarantees" className="py-24 px-6 border-t border-border/30 bg-card/20">
+       {/* CLEAR SCOPE STATEMENT */}
+       <section className="py-20 px-6 border-t border-border/30 bg-card/20">
          <div className="max-w-7xl mx-auto">
-           <div className="grid grid-cols-12 gap-12">
-             <div className="col-span-4">
-               <span className="text-[10px] font-mono text-muted-foreground tracking-widest">OPERATIONAL CONSTRAINTS</span>
-               <h2 className="text-2xl font-mono font-light mt-2 mb-6">What this tool will never do</h2>
-               <p className="text-sm text-muted-foreground leading-relaxed">
-                 Safety is non-negotiable. The scanner operates within strict boundaries 
-                 that cannot be overridden. These constraints are enforced at the 
-                 orchestration layer, not merely documented.
-               </p>
+           <div className="mb-12">
+             <span className="text-[10px] font-mono text-muted-foreground tracking-widest">BOUNDARIES</span>
+             <h2 className="text-2xl font-mono font-light mt-2">Clear Scope. No Surprises.</h2>
+           </div>
+ 
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             {/* Included */}
+             <div className="border border-border/50 bg-background/50">
+               <div className="px-4 py-3 border-b border-border/50 bg-muted/20">
+                 <span className="text-[11px] font-mono tracking-wider text-primary">WHAT'S INCLUDED</span>
+               </div>
+               <div className="p-4 space-y-3">
+                 {[
+                   'Security configuration analysis',
+                   'Authentication & session safety checks',
+                   'Safe input handling probes',
+                   'Performance baselines',
+                   'Controlled load ramps',
+                   'Evidence-backed reports',
+                 ].map((item, i) => (
+                   <div key={i} className="flex items-center gap-3">
+                     <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                     <span className="text-sm text-foreground">{item}</span>
+                   </div>
+                 ))}
+               </div>
              </div>
  
-             <div className="col-span-8">
-               <div className="grid grid-cols-2 gap-6">
+             {/* Excluded */}
+             <div className="border border-border/50 bg-background/50">
+               <div className="px-4 py-3 border-b border-border/50 bg-muted/20">
+                 <span className="text-[11px] font-mono tracking-wider text-muted-foreground">WHAT'S INTENTIONALLY EXCLUDED</span>
+               </div>
+               <div className="p-4 space-y-3">
                  {[
-                   {
-                     constraint: 'No payload injection',
-                     detail: 'Will not submit SQL, XSS, or other attack payloads. Detection is inference-based only.',
-                   },
-                   {
-                     constraint: 'No credential testing',
-                     detail: 'Will not attempt password guessing, brute force, or credential stuffing.',
-                   },
-                   {
-                     constraint: 'No data exfiltration',
-                     detail: 'Response bodies are analyzed locally. No user data is transmitted or stored.',
-                   },
-                   {
-                     constraint: 'No persistent state mutation',
-                     detail: 'All requests are idempotent. No writes, deletes, or state changes executed.',
-                   },
-                   {
-                     constraint: 'No denial of service',
-                     detail: 'Automatic backoff when error rates exceed threshold. Hard RPS ceiling enforced.',
-                   },
-                   {
-                     constraint: 'No third-party scanning',
-                     detail: 'Targets must be explicitly authorized. Domain ownership verification required.',
-                   },
-                 ].map((item, index) => (
-                   <div key={index} className="p-5 border border-border/50 bg-background/50">
-                     <div className="flex items-center gap-2 mb-2">
-                       <AlertTriangle className="w-3 h-3 text-severity-medium" />
-                       <span className="text-xs font-mono text-foreground">{item.constraint}</span>
-                     </div>
-                     <p className="text-xs text-muted-foreground leading-relaxed">
-                       {item.detail}
-                     </p>
+                   'Destructive testing by default',
+                   'Financial transaction testing',
+                   'Unlimited load generation',
+                   'Blind fuzzing on production',
+                 ].map((item, i) => (
+                   <div key={i} className="flex items-center gap-3">
+                     <X className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                     <span className="text-sm text-muted-foreground">{item}</span>
                    </div>
                  ))}
                </div>
              </div>
            </div>
-         </div>
-       </section>
  
-       {/* Technical Specifications */}
-       <section id="specs" className="py-24 px-6 border-t border-border/30">
-         <div className="max-w-7xl mx-auto">
-           <div className="mb-16">
-             <span className="text-[10px] font-mono text-muted-foreground tracking-widest">TECHNICAL PARAMETERS</span>
-             <h2 className="text-2xl font-mono font-light mt-2">Analysis specifications</h2>
-           </div>
- 
-           <div className="grid grid-cols-3 gap-px bg-border/30">
-             {[
-               { label: 'TLS Versions', value: '1.2, 1.3', unit: 'supported' },
-               { label: 'Max Concurrency', value: '100', unit: 'connections' },
-               { label: 'Rate Limit', value: '50', unit: 'RPS ceiling' },
-               { label: 'Timeout', value: '30', unit: 'seconds' },
-               { label: 'Backoff Threshold', value: '5%', unit: 'error rate' },
-               { label: 'Report Formats', value: 'JSON, HTML', unit: 'output' },
-               { label: 'Latency Percentiles', value: 'p50, p95, p99', unit: 'tracked' },
-               { label: 'Header Checks', value: '12', unit: 'security headers' },
-               { label: 'Evidence Retention', value: '30', unit: 'days' },
-             ].map((spec, index) => (
-               <div key={index} className="p-6 bg-background">
-                 <div className="text-[10px] font-mono text-muted-foreground tracking-wider mb-2">{spec.label}</div>
-                 <div className="flex items-baseline gap-2">
-                   <span className="text-xl font-mono text-foreground">{spec.value}</span>
-                   <span className="text-[10px] font-mono text-muted-foreground">{spec.unit}</span>
-                 </div>
-               </div>
-             ))}
-           </div>
+           <p className="mt-8 text-sm text-muted-foreground font-mono">
+             This keeps your systems safe — and your results trustworthy.
+           </p>
          </div>
        </section>
  
        {/* Final CTA */}
-       <section className="py-24 px-6 border-t border-border/30">
-         <div className="max-w-3xl mx-auto text-center">
-           <h2 className="text-2xl font-mono font-light mb-4">Ready to analyze your application</h2>
-           <p className="text-sm text-muted-foreground mb-10 max-w-xl mx-auto">
+       <section className="py-20 px-6 border-t border-border/30">
+         <div className="max-w-2xl mx-auto text-center">
+           <h2 className="text-2xl font-mono font-light mb-4">Ready to Analyze Your Application</h2>
+           <p className="text-sm text-muted-foreground mb-10">
              Provide a URL. Authorize the scan. Receive a deterministic security 
              posture report with evidence-backed findings and remediation guidance.
            </p>
            <Link to="/projects/new">
-             <Button className="font-mono text-xs rounded-sm h-12 px-8 bg-primary hover:bg-primary/90">
-               AUTHORIZE ANALYSIS
+             <Button className="font-mono text-[11px] rounded-sm h-11 px-8 bg-primary hover:bg-primary/90">
+               AUTHORIZE A SCAN
                <ChevronRight className="w-4 h-4 ml-2" />
              </Button>
            </Link>
-           <p className="text-[10px] font-mono text-muted-foreground mt-6">
-             No account required for initial scan. Results delivered in under 5 minutes.
-           </p>
          </div>
        </section>
  
-       {/* Footer */}
-       <footer className="py-8 px-6 border-t border-border/30">
-         <div className="max-w-7xl mx-auto flex items-center justify-between">
-           <div className="flex items-center gap-2">
-             <Shield className="w-4 h-4 text-muted-foreground" />
-             <span className="text-[10px] font-mono text-muted-foreground">VIBE_SEC v2.0</span>
-           </div>
-           <div className="text-[10px] font-mono text-muted-foreground">
-             Deterministic security analysis for modern applications
-           </div>
-         </div>
-       </footer>
+       <SiteFooter />
      </div>
    );
  }
