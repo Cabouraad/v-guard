@@ -1,1 +1,13 @@
 project_id = "vrireccyyykuszuyobri"
+ 
+ [functions.stripe-checkout]
+ verify_jwt = false
+ 
+ [functions.stripe-portal]
+ verify_jwt = false
+ 
+ [functions.stripe-webhook]
+ verify_jwt = false
+ 
+ [functions.check-subscription]
+ verify_jwt = false

@@ -1,0 +1,99 @@
+ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+ import Stripe from "stripe";
+ import { createClient } from "@supabase/supabase-js";
+ 
+ const corsHeaders = {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+ };
+ 
+ // Price IDs for subscription tiers
+ const PRICE_IDS = {
+   standard: "price_1SxHva1B5M2OuX4nze4AU7Up",
+   production: "price_1SxHvm1B5M2OuX4nxghY7dP7",
+ };
+ 
+ const logStep = (step: string, details?: unknown) => {
+   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
+   console.log(`[STRIPE-CHECKOUT] ${step}${detailsStr}`);
+ };
+ 
+ serve(async (req) => {
+   if (req.method === "OPTIONS") {
+     return new Response(null, { headers: corsHeaders });
+   }
+ 
+   try {
+     logStep("Function started");
+ 
+     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
+     logStep("Stripe key verified");
+ 
+     const supabaseClient = createClient(
+       Deno.env.get("SUPABASE_URL") ?? "",
+       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+     );
+ 
+     const authHeader = req.headers.get("Authorization");
+     if (!authHeader) throw new Error("No authorization header provided");
+ 
+     const token = authHeader.replace("Bearer ", "");
+     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+     if (userError) throw new Error(`Authentication error: ${userError.message}`);
+     
+     const user = userData.user;
+     if (!user?.email) throw new Error("User not authenticated or email not available");
+     logStep("User authenticated", { userId: user.id, email: user.email });
+ 
+     // Parse request body for tier selection
+     const { tier = "standard" } = await req.json().catch(() => ({}));
+     const priceId = PRICE_IDS[tier as keyof typeof PRICE_IDS] || PRICE_IDS.standard;
+     logStep("Selected tier", { tier, priceId });
+ 
+     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+ 
+     // Check for existing customer
+     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+     let customerId: string | undefined;
+     if (customers.data.length > 0) {
+       customerId = customers.data[0].id;
+       logStep("Found existing Stripe customer", { customerId });
+     }
+ 
+     const origin = req.headers.get("origin") || "http://localhost:5173";
+ 
+     const session = await stripe.checkout.sessions.create({
+       customer: customerId,
+       customer_email: customerId ? undefined : user.email,
+       client_reference_id: user.id,
+       line_items: [
+         {
+           price: priceId,
+           quantity: 1,
+         },
+       ],
+       mode: "subscription",
+       success_url: `${origin}/dashboard?checkout=success`,
+       cancel_url: `${origin}/pricing?checkout=canceled`,
+       metadata: {
+         user_id: user.id,
+         tier: tier,
+       },
+     });
+ 
+     logStep("Checkout session created", { sessionId: session.id });
+ 
+     return new Response(JSON.stringify({ url: session.url }), {
+       headers: { ...corsHeaders, "Content-Type": "application/json" },
+       status: 200,
+     });
+   } catch (error) {
+     const errorMessage = error instanceof Error ? error.message : String(error);
+     logStep("ERROR", { message: errorMessage });
+     return new Response(JSON.stringify({ error: errorMessage }), {
+       headers: { ...corsHeaders, "Content-Type": "application/json" },
+       status: 500,
+     });
+   }
+ });
