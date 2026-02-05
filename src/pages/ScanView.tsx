@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+ import { useEffect, useState } from 'react';
+ import { ScanSafetyBadge, useSafetyLock } from '@/components/safety';
 import { useParams, Link } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { ScanProgress } from '@/components/scan/ScanProgress';
@@ -34,7 +35,8 @@ export default function ScanView() {
   const [tasks, setTasks] = useState<ScanTask[]>(initialTasks);
   const [scanStatus, setScanStatus] = useState<ScanStatus>('running');
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [scores, setScores] = useState({ security: 0, reliability: 0 });
+ const [scores, setScores] = useState({ security: 0, reliability: 0 });
+   const { state: safetyState, getAuditString } = useSafetyLock();
 
   // Simulate scan progress
   useEffect(() => {
@@ -109,8 +111,14 @@ export default function ScanView() {
         <Card>
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <StatusBadge status={scanStatus} />
+               <div className="flex items-center gap-4">
+                 <ScanSafetyBadge 
+                   isLocked={safetyState.isLocked}
+                   approvedForProduction={safetyState.approvedForProduction}
+                   enabledModules={safetyState.enabledModules}
+                   size="md"
+                 />
+                 <StatusBadge status={scanStatus} />
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="w-4 h-4" />
                   {formatTime(elapsedTime)}

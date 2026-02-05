@@ -1,4 +1,5 @@
-import { Bell, User, LogOut } from 'lucide-react';
+ import { useState } from 'react';
+ import { Bell, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,14 +9,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+ import { SafetyLockIndicator, SafetyLockPanel, WhyLockedPanel } from '@/components/safety';
 
 interface HeaderProps {
   title?: string;
   subtitle?: string;
 }
 
-export function Header({ title, subtitle }: HeaderProps) {
+ export function Header({ title, subtitle }: HeaderProps) {
+   const [unlockPanelOpen, setUnlockPanelOpen] = useState(false);
+   const [whyLockedPanelOpen, setWhyLockedPanelOpen] = useState(false);
+ 
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50 backdrop-blur-sm">
       <div>
@@ -23,8 +28,14 @@ export function Header({ title, subtitle }: HeaderProps) {
         {subtitle && <p className="text-xs font-mono text-muted-foreground">{subtitle}</p>}
       </div>
 
-      <div className="flex items-center gap-3">
-        {/* Alerts */}
+       <div className="flex items-center gap-4">
+         {/* Safety Lock Indicator */}
+         <SafetyLockIndicator 
+           onUnlockClick={() => setUnlockPanelOpen(true)}
+           onWhyLockedClick={() => setWhyLockedPanelOpen(true)}
+         />
+ 
+         {/* Alerts */}
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1 right-1 w-2 h-2 bg-severity-critical rounded-full" />
@@ -55,7 +66,11 @@ export function Header({ title, subtitle }: HeaderProps) {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
-    </header>
+       </div>
+ 
+       {/* Safety Lock Panels */}
+       <SafetyLockPanel open={unlockPanelOpen} onOpenChange={setUnlockPanelOpen} />
+       <WhyLockedPanel open={whyLockedPanelOpen} onOpenChange={setWhyLockedPanelOpen} />
+     </header>
   );
 }

@@ -1,4 +1,6 @@
-import { Header } from '@/components/layout/Header';
+ import { Header } from '@/components/layout/Header';
+ import { ScanSafetyBadge, useSafetyLock } from '@/components/safety';
+ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -142,7 +144,10 @@ const performanceData = [
   { time: '90s', latency: 130, rps: 0 },
 ];
 
-export default function Report() {
+ export default function Report() {
+   const { state: safetyState, getAuditString } = useSafetyLock();
+   const auditString = getAuditString();
+ 
   const severityCounts: Record<string, number> = {
     critical: findings.filter(f => f.severity === 'critical').length,
     high: findings.filter(f => f.severity === 'high').length,
@@ -172,10 +177,17 @@ export default function Report() {
           </Button>
         </div>
 
-        {/* Executive Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Executive Summary</CardTitle>
+         {/* Executive Summary */}
+         <Card>
+           <CardHeader>
+             <div className="flex items-center justify-between">
+               <CardTitle>Executive Summary</CardTitle>
+               <ScanSafetyBadge 
+                 isLocked={safetyState.isLocked}
+                 approvedForProduction={safetyState.approvedForProduction}
+                 enabledModules={safetyState.enabledModules}
+               />
+             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -201,8 +213,20 @@ export default function Report() {
                       <span className="font-mono font-bold">{severityCounts[sev]}</span>
                     </div>
                   ))}
-                </div>
-              </div>
+               </div>
+               
+               {/* Audit Note */}
+               <div className="col-span-full mt-4 pt-4 border-t border-border">
+                 <div className="flex items-center gap-2">
+                   <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+                     Audit Record:
+                   </span>
+                   <Badge variant="outline" className="font-mono text-[10px]">
+                     {auditString}
+                   </Badge>
+                 </div>
+               </div>
+             </div>
             </div>
           </CardContent>
         </Card>
