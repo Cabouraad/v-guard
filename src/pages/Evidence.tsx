@@ -115,53 +115,65 @@ export default function Evidence() {
           </div>
 
           {!scanRunId ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-mono text-sm">Select a Scan Run</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {runsLoading ? (
-                  <div className="space-y-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Skeleton key={i} className="h-12 w-full" />
-                    ))}
+            <>
+              {runsLoading ? (
+                <div className="space-y-3 pt-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Skeleton key={i} className="h-14 w-full" />
+                  ))}
+                </div>
+              ) : !scanRuns?.length ? (
+                /* Empty State — no runs at all */
+                <div className="flex flex-col items-center justify-center pt-24 text-center">
+                  <div className="w-16 h-16 rounded-sm border border-dashed border-border flex items-center justify-center mb-6">
+                    <FileText className="w-8 h-8 text-muted-foreground/50" />
                   </div>
-                ) : !scanRuns?.length ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground text-sm mb-4">
-                      No scan runs available.
-                    </p>
-                    <Link to="/dashboard/targets/new">
-                      <Button variant="outline" size="sm">
-                        Authorize a Scan
-                      </Button>
-                    </Link>
+                  <h2 className="font-mono text-sm text-foreground mb-2">
+                    NO EVIDENCE AVAILABLE
+                  </h2>
+                  <p className="font-mono text-xs text-muted-foreground max-w-md mb-6 leading-relaxed">
+                    Evidence artifacts, findings, and redacted request logs will populate here 
+                    after a scan probe completes against an authorized target.
+                  </p>
+                  <Link to="/dashboard/targets">
+                    <Button variant="outline" size="sm" className="gap-2 font-mono text-xs">
+                      AUTHORIZE A TARGET
+                    </Button>
+                  </Link>
+                </div>
+              ) : (
+                /* Scan Run Selection */
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      SELECT SCAN RUN TO INSPECT
+                    </span>
                   </div>
-                ) : (
-                  <div className="space-y-2">
+                  <div className="divide-y divide-border border border-border rounded-sm">
                     {scanRuns.map((run) => (
                       <button
                         key={run.id}
                         onClick={() => selectScanRun(run.id)}
-                        className="w-full flex items-center gap-4 p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                        className="w-full flex items-center gap-4 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">
-                            {run.project?.name || 'Unknown Project'}
+                          <p className="font-mono text-sm font-medium truncate text-foreground">
+                            {run.project?.name || 'Unknown Target'}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs font-mono text-muted-foreground">
                             {run.started_at
                               ? format(new Date(run.started_at), 'MMM d, yyyy HH:mm')
-                              : 'Not started'}
+                              : 'PENDING'}
                           </p>
                         </div>
                         <StatusBadge status={run.status} />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
                       </button>
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+            </>
           ) : (
             <>
               {/* Selected Run Header */}
