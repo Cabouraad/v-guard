@@ -16,9 +16,9 @@ import { useState } from 'react';
 const navItems = [
   { to: '/', icon: Shield, label: 'Control' },
   { to: '/projects', icon: FolderOpen, label: 'Targets' },
-  { to: '/scans', icon: Activity, label: 'Scan Log' },
-  { to: '/reports', icon: FileText, label: 'Evidence' },
-  { to: '/settings', icon: Settings, label: 'Config' },
+  { to: '/scan-log', icon: Activity, label: 'Scan Log' },
+  { to: '/evidence', icon: FileText, label: 'Evidence' },
+  { to: '/config', icon: Settings, label: 'Config' },
 ];
 
 export function Sidebar() {
