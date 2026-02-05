@@ -26,9 +26,10 @@
    errorMessage?: string;
    errorDetail?: string;
    isAdvanced?: boolean;
-  skippedReason?: 'safety_lock' | 'not_configured' | 'guardrail' | 'dependency_failed' | 'operator_halt';
+  skippedReason?: 'safety_lock' | 'not_configured' | 'guardrail' | 'dependency_failed' | 'operator_halt' | 'window_closed';
   haltedBy?: string;
   haltedAt?: string;
+  queuedUntil?: string;
  }
  
  interface ScanProgressTimelineProps {
@@ -103,6 +104,8 @@
        return 'Skipped (Dependency Failed)';
     case 'operator_halt':
       return 'Halted by Operator';
+    case 'window_closed':
+      return 'Queued (Window Closed)';
      default:
        return 'Skipped';
    }
@@ -218,6 +221,8 @@
                         <ShieldOff className="w-3 h-3 text-severity-medium" />
                       ) : step.skippedReason === 'operator_halt' ? (
                         <XCircle className="w-3 h-3 text-severity-medium" />
+                     ) : step.skippedReason === 'window_closed' ? (
+                       <Clock className="w-3 h-3 text-severity-medium" />
                       ) : null}
                      <span className="text-[10px] font-mono text-severity-medium">
                        {getSkipLabel(step.skippedReason)}
@@ -227,6 +232,11 @@
                           — {step.haltedBy}
                         </span>
                       )}
+                     {step.queuedUntil && (
+                       <span className="text-[10px] font-mono text-muted-foreground">
+                         — Opens {step.queuedUntil}
+                       </span>
+                     )}
                    </div>
                  )}
  

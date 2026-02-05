@@ -40,6 +40,7 @@ const statusIcons: Record<string, React.ComponentType<{ className?: string }>> =
   cancelled: X,
   canceled: X,
   skipped: Clock,
+  queued_window: Clock,
 };
 
 const statusLabels: Record<string, string> = {
@@ -52,6 +53,7 @@ const statusLabels: Record<string, string> = {
   cancelled: 'HALTED',
   canceled: 'HALTED',
   skipped: 'SKIPPED',
+  queued_window: 'QUEUED (WINDOW)',
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
