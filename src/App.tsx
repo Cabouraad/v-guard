@@ -3,7 +3,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth";
@@ -12,9 +11,6 @@ import Safety from "@/pages/Safety";
 import Pricing from "@/pages/Pricing";
 import FAQ from "@/pages/FAQ";
 import Auth from "@/pages/Auth";
-import DashboardOverview from "@/pages/dashboard/DashboardOverview";
-import ScansView from "@/pages/dashboard/ScansView";
-import LoadTestingView from "@/pages/dashboard/LoadTestingView";
 import Projects from "@/pages/Projects";
 import NewProject from "@/pages/NewProject";
 import ScanView from "@/pages/ScanView";
@@ -51,7 +47,7 @@ const App = () => (
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/auth" element={<Auth />} />
                     
-                    {/* Protected Dashboard with nav rail */}
+                    {/* Protected Dashboard with nav rail - ALL authenticated routes */}
                     <Route
                       path="/dashboard"
                       element={
@@ -60,30 +56,32 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     >
-                      <Route index element={<DashboardOverview />} />
-                      <Route path="scans" element={<ScansView />} />
-                      <Route path="load" element={<LoadTestingView />} />
-                      <Route path="reports" element={<Navigate to="/dashboard" replace />} />
-                      <Route path="settings" element={<Navigate to="/dashboard" replace />} />
+                      {/* Index redirects to targets */}
+                      <Route index element={<Navigate to="/dashboard/targets" replace />} />
+                      
+                      {/* Canonical dashboard routes */}
+                      <Route path="targets" element={<Projects />} />
+                      <Route path="targets/new" element={<NewProject />} />
+                      <Route path="scan-log" element={<ScanLog />} />
+                      <Route path="scan-log/:scanRunId" element={<ScanLogDetail />} />
+                      <Route path="evidence" element={<Evidence />} />
+                      <Route path="evidence/:scanRunId" element={<Evidence />} />
+                      <Route path="config" element={<Config />} />
+                      
+                      {/* Additional routes within dashboard */}
+                      <Route path="scans/:scanId" element={<ScanView />} />
+                      <Route path="reports/:reportId" element={<Report />} />
                     </Route>
 
-                    {/* Protected App routes with sidebar layout */}
-                    <Route
-                      element={
-                        <ProtectedRoute>
-                          <AppLayout />
-                        </ProtectedRoute>
-                      }
-                    >
-                      <Route path="/projects" element={<Projects />} />
-                      <Route path="/projects/new" element={<NewProject />} />
-                      <Route path="/scans/:scanId" element={<ScanView />} />
-                      <Route path="/reports/:reportId" element={<Report />} />
-                      <Route path="/scan-log" element={<ScanLog />} />
-                      <Route path="/scan-log/:scanRunId" element={<ScanLogDetail />} />
-                      <Route path="/evidence" element={<Evidence />} />
-                      <Route path="/config" element={<Config />} />
-                    </Route>
+                    {/* Legacy route redirects - avoid 404s for existing deep links */}
+                    <Route path="/projects" element={<Navigate to="/dashboard/targets" replace />} />
+                    <Route path="/projects/new" element={<Navigate to="/dashboard/targets/new" replace />} />
+                    <Route path="/scan-log" element={<Navigate to="/dashboard/scan-log" replace />} />
+                    <Route path="/scan-log/:scanRunId" element={<Navigate to="/dashboard/scan-log/:scanRunId" replace />} />
+                    <Route path="/evidence" element={<Navigate to="/dashboard/evidence" replace />} />
+                    <Route path="/config" element={<Navigate to="/dashboard/config" replace />} />
+                    <Route path="/scans/:scanId" element={<Navigate to="/dashboard/scans/:scanId" replace />} />
+                    <Route path="/reports/:reportId" element={<Navigate to="/dashboard/reports/:reportId" replace />} />
                     
                     <Route path="*" element={<NotFound />} />
                   </Routes>

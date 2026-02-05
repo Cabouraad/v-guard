@@ -91,12 +91,12 @@
                {projects.length} TARGETS REGISTERED
              </span>
            </div>
-           <Link to="/projects/new">
-             <Button size="sm" className="gap-2 font-mono text-xs">
-               <Plus className="w-4 h-4" />
-               AUTHORIZE TARGET
-             </Button>
-           </Link>
+            <Link to="/dashboard/targets/new">
+              <Button size="sm" className="gap-2 font-mono text-xs">
+                <Plus className="w-4 h-4" />
+                AUTHORIZE TARGET
+              </Button>
+            </Link>
          </div>
  
          {/* Table */}
@@ -131,13 +131,13 @@
          </div>
  
          {/* Footer with add action */}
-         <div className="px-6 py-4 border-t border-border">
-           <Link to="/projects/new">
-             <button className="w-full py-3 border border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-xs font-mono text-muted-foreground hover:text-foreground">
-               <Plus className="w-4 h-4" />
-               AUTHORIZE NEW TARGET
-             </button>
-           </Link>
+          <div className="px-6 py-4 border-t border-border">
+            <Link to="/dashboard/targets/new">
+              <button className="w-full py-3 border border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-xs font-mono text-muted-foreground hover:text-foreground">
+                <Plus className="w-4 h-4" />
+                AUTHORIZE NEW TARGET
+              </button>
+            </Link>
          </div>
        </div>
      </div>
@@ -211,9 +211,9 @@
          </td>
          <td className="px-4 py-4">
            <div className="flex items-center justify-end gap-1">
-             <Link to={`/scans/${project.id}`} onClick={(e) => e.stopPropagation()}>
-               <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                 <Play className="w-3.5 h-3.5" />
+              <Link to={`/dashboard/scans/${project.id}`} onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                  <Play className="w-3.5 h-3.5" />
                </Button>
              </Link>
            </div>
@@ -277,10 +277,10 @@
                </div>
  
                {/* Actions */}
-               <div className="flex items-center justify-end gap-2">
-                 <Link to={`/scans/${project.id}`} onClick={(e) => e.stopPropagation()}>
-                   <Button size="sm" variant="outline" className="gap-1.5 font-mono text-[10px]">
-                     <Play className="w-3 h-3" />
+                <div className="flex items-center justify-end gap-2">
+                  <Link to={`/dashboard/scans/${project.id}`} onClick={(e) => e.stopPropagation()}>
+                    <Button size="sm" variant="outline" className="gap-1.5 font-mono text-[10px]">
+                      <Play className="w-3 h-3" />
                      QUEUE SCAN
                    </Button>
                  </Link>

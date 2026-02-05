@@ -139,7 +139,7 @@ export default function NewProject() {
       await checkSubscription();
 
       toast.success('Target authorized. Scan queued for execution.');
-      navigate(`/scans/${data.scan_run_id}`);
+      navigate(`/dashboard/scans/${data.scan_run_id}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create scan';
       setServerError(message);
