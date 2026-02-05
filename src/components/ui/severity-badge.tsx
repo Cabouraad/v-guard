@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import type { SeverityLevel } from '@/types/database';
 
 const severityBadgeVariants = cva(
-  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[10px] font-mono font-medium border transition-colors uppercase tracking-wider",
   {
     variants: {
       severity: {
@@ -35,19 +35,19 @@ interface SeverityBadgeProps extends VariantProps<typeof severityBadgeVariants> 
 
 export function SeverityBadge({ severity, size, showIcon = true, className }: SeverityBadgeProps) {
   const labels: Record<SeverityLevel, string> = {
-    critical: 'Critical',
-    high: 'High',
-    medium: 'Medium',
-    low: 'Low',
-    info: 'Info',
-    not_tested: 'Not Tested',
+    critical: 'CRIT',
+    high: 'HIGH',
+    medium: 'MED',
+    low: 'LOW',
+    info: 'INFO',
+    not_tested: 'UNTESTED',
   };
 
   return (
     <span className={cn(severityBadgeVariants({ severity, size }), className)}>
       {showIcon && (
         <span className={cn(
-          "w-1.5 h-1.5 rounded-full",
+          "w-1.5 h-1.5 rounded-sm",
           severity === 'critical' && "bg-severity-critical animate-pulse",
           severity === 'high' && "bg-severity-high",
           severity === 'medium' && "bg-severity-medium",

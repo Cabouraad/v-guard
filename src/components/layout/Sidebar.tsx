@@ -14,11 +14,11 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 
 const navItems = [
-  { to: '/', icon: Shield, label: 'Dashboard' },
-  { to: '/projects', icon: FolderOpen, label: 'Projects' },
-  { to: '/scans', icon: Activity, label: 'Scans' },
-  { to: '/reports', icon: FileText, label: 'Reports' },
-  { to: '/settings', icon: Settings, label: 'Settings' },
+  { to: '/', icon: Shield, label: 'Control' },
+  { to: '/projects', icon: FolderOpen, label: 'Targets' },
+  { to: '/scans', icon: Activity, label: 'Scan Log' },
+  { to: '/reports', icon: FileText, label: 'Evidence' },
+  { to: '/settings', icon: Settings, label: 'Config' },
 ];
 
 export function Sidebar() {
@@ -34,28 +34,28 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 glow-primary">
+        <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10 glow-primary">
           <Shield className="w-6 h-6 text-primary" />
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-semibold text-sidebar-foreground">VibeGuard</span>
-            <span className="text-xs text-muted-foreground">Security Scanner</span>
+            <span className="font-mono text-sm text-sidebar-foreground">VIBE_SEC</span>
+            <span className="text-[10px] font-mono text-muted-foreground">SECURITY PROBE</span>
           </div>
         )}
       </div>
 
-      {/* New Scan Button */}
+      {/* Queue Scan Button */}
       <div className="px-3 py-4">
         <NavLink to="/projects/new">
           <Button 
             className={cn(
-              "w-full justify-start gap-2 bg-primary hover:bg-primary/90",
+              "w-full justify-start gap-2 bg-primary hover:bg-primary/90 font-mono text-xs rounded-sm",
               collapsed && "justify-center px-2"
             )}
           >
             <Plus className="w-4 h-4" />
-            {!collapsed && <span>New Project</span>}
+            {!collapsed && <span>AUTHORIZE</span>}
           </Button>
         </NavLink>
       </div>
@@ -71,7 +71,7 @@ export function Sidebar() {
               key={item.to}
               to={item.to}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+                "flex items-center gap-3 px-3 py-2.5 rounded-sm transition-all duration-200 font-mono text-xs",
                 "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 isActive 
                   ? "bg-sidebar-accent text-primary font-medium" 
@@ -92,14 +92,14 @@ export function Sidebar() {
           variant="ghost"
           size="sm"
           onClick={() => setCollapsed(!collapsed)}
-          className={cn("w-full justify-center", collapsed && "px-2")}
+          className={cn("w-full justify-center font-mono text-xs", collapsed && "px-2")}
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
           ) : (
             <>
               <ChevronLeft className="w-4 h-4 mr-2" />
-              <span>Collapse</span>
+              <span>COLLAPSE</span>
             </>
           )}
         </Button>

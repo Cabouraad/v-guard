@@ -57,12 +57,12 @@
        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
          <div className="flex items-center gap-4">
            <Activity className="w-5 h-5 text-primary" />
-           <h1 className="font-mono text-lg text-foreground tracking-tight">SCAN HISTORY</h1>
+          <h1 className="font-mono text-lg text-foreground tracking-tight">SCAN LOG</h1>
          </div>
          <Link to="/projects/new">
            <Button variant="default" size="sm" className="font-mono text-xs gap-2">
              <Plus className="w-3 h-3" />
-             NEW SCAN
+            QUEUE SCAN
            </Button>
          </Link>
        </header>
@@ -80,13 +80,13 @@
          <table className="w-full">
            <thead className="sticky top-0 bg-background border-b border-border">
              <tr className="text-left">
-               <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">Severity</th>
-               <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">Project</th>
-               <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">Target</th>
-               <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">Status</th>
-               <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">Started</th>
-               <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">Duration</th>
-               <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider text-right">Findings</th>
+              <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">SEV</th>
+              <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">TARGET</th>
+              <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">ENDPOINT</th>
+              <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">STATE</th>
+              <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">QUEUED</th>
+              <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider">ELAPSED</th>
+              <th className="px-6 py-3 text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-wider text-right">ISSUES</th>
              </tr>
            </thead>
            <tbody>

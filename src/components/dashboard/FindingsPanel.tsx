@@ -132,7 +132,7 @@
            
            {finding.endpoint && (
              <div className="flex items-center gap-2">
-               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Endpoint</span>
+               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">TARGET</span>
                <code className="text-xs font-mono text-foreground bg-muted px-2 py-0.5 rounded-sm">
                  {finding.endpoint}
                </code>
@@ -141,14 +141,14 @@
  
            {finding.impact && (
              <div>
-               <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">Impact</span>
+               <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">IMPACT</span>
                <p className="text-sm text-foreground/80">{finding.impact}</p>
              </div>
            )}
  
            {finding.reproSteps && (
              <div>
-               <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">Reproduction</span>
+               <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1">REPRO STEPS</span>
                <ol className="list-decimal list-inside text-sm text-foreground/80 space-y-1">
                  {finding.reproSteps.map((step, i) => (
                    <li key={i}>{step}</li>
@@ -160,13 +160,13 @@
            {finding.fixPrompt && (
              <div className="border-t border-border pt-3 mt-3">
                <div className="flex items-center justify-between mb-2">
-                 <span className="text-[10px] uppercase tracking-wider text-primary">Fix Prompt</span>
+                 <span className="text-[10px] uppercase tracking-wider text-primary">REMEDIATION PROMPT</span>
                  <button
                    onClick={copyFixPrompt}
                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                  >
                    {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                   {copied ? 'Copied' : 'Copy'}
+                   {copied ? 'COPIED' : 'EXPORT'}
                  </button>
                </div>
                <code className="block text-xs font-mono text-foreground/90 bg-muted/50 p-2 rounded-sm">

@@ -11,11 +11,11 @@
  import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
  
  const navItems = [
-   { to: '/dashboard', icon: Shield, label: 'Overview', exact: true },
-   { to: '/dashboard/scans', icon: Activity, label: 'Scans' },
-   { to: '/dashboard/load', icon: Gauge, label: 'Load Testing' },
-   { to: '/dashboard/reports', icon: FileText, label: 'Reports' },
-   { to: '/dashboard/settings', icon: Settings, label: 'Settings' },
+  { to: '/dashboard', icon: Shield, label: 'Control', exact: true },
+  { to: '/dashboard/scans', icon: Activity, label: 'Scan Log' },
+  { to: '/dashboard/load', icon: Gauge, label: 'Load Probe' },
+  { to: '/dashboard/reports', icon: FileText, label: 'Evidence' },
+  { to: '/dashboard/settings', icon: Settings, label: 'Config' },
  ];
  
  export function NavRail() {

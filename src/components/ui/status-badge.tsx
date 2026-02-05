@@ -4,7 +4,7 @@ import { Loader2, Check, X, Clock, Pause } from 'lucide-react';
 import type { ScanStatus, TaskStatus } from '@/types/database';
 
 const statusBadgeVariants = cva(
-  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+  "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[10px] font-mono font-medium uppercase tracking-wider",
   {
     variants: {
       status: {
@@ -43,15 +43,15 @@ const statusIcons: Record<string, React.ComponentType<{ className?: string }>> =
 };
 
 const statusLabels: Record<string, string> = {
-  pending: 'Pending',
-  queued: 'Queued',
-  running: 'Running',
-  paused: 'Paused',
-  completed: 'Completed',
-  failed: 'Failed',
-  cancelled: 'Cancelled',
-  canceled: 'Canceled',
-  skipped: 'Skipped',
+  pending: 'QUEUED',
+  queued: 'QUEUED',
+  running: 'RUNNING',
+  paused: 'PAUSED',
+  completed: 'COMPLETE',
+  failed: 'FAILED',
+  cancelled: 'HALTED',
+  canceled: 'HALTED',
+  skipped: 'SKIPPED',
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {

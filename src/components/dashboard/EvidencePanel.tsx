@@ -10,9 +10,9 @@
  type TabType = 'logs' | 'request' | 'screenshot';
  
  const tabs: { id: TabType; label: string; icon: typeof FileText }[] = [
-   { id: 'logs', label: 'Logs', icon: Terminal },
-   { id: 'request', label: 'Request', icon: FileText },
-   { id: 'screenshot', label: 'Capture', icon: ImageIcon },
+  { id: 'logs', label: 'LOG', icon: Terminal },
+  { id: 'request', label: 'REQ/RES', icon: FileText },
+  { id: 'screenshot', label: 'CAPTURE', icon: ImageIcon },
  ];
  
  const mockLogs = `[2026-02-05T14:23:01Z] GET /api/users/profile HTTP/1.1
@@ -98,7 +98,7 @@
            <div className="flex items-center justify-center h-full text-muted-foreground">
              <div className="text-center">
                <ImageIcon className="w-8 h-8 mx-auto mb-2 opacity-50" />
-               <p className="text-xs">No capture available</p>
+              <p className="text-xs font-mono">NO CAPTURE RECORDED</p>
              </div>
            </div>
          )}
