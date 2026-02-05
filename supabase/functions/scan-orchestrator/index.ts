@@ -1,10 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-scan-run-id",
-};
+// Internal worker — no CORS needed. Called server-to-server only.
+const jsonHeaders = { "Content-Type": "application/json" };
 
 // Types
 interface ScanConfig {
@@ -555,7 +553,7 @@ function calculateReliabilityScore(metrics: ScanMetric[]): number {
 // Main orchestrator handler
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204 });
   }
 
   try {
@@ -574,7 +572,7 @@ serve(async (req) => {
         if (!validation.valid) {
           return new Response(
             JSON.stringify({ success: false, errors: validation.errors }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 400, headers: jsonHeaders }
           );
         }
 
@@ -588,7 +586,7 @@ serve(async (req) => {
         if (projectError || !project) {
           return new Response(
             JSON.stringify({ success: false, error: "Project not found" }),
-            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 404, headers: jsonHeaders }
           );
         }
 
@@ -647,7 +645,7 @@ serve(async (req) => {
             tasksCreated: tasksToCreate.length,
             notTested: getNotTestedEntries(config)
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: jsonHeaders }
         );
       }
 
@@ -664,7 +662,7 @@ serve(async (req) => {
         if (runError || !scanRun) {
           return new Response(
             JSON.stringify({ success: false, error: "Scan run not found" }),
-            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 404, headers: jsonHeaders }
           );
         }
 
@@ -759,7 +757,7 @@ serve(async (req) => {
             findingsCount: allFindings.length,
             circuitBreakerState: circuitBreaker.getState()
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: jsonHeaders }
         );
       }
 
@@ -776,7 +774,7 @@ serve(async (req) => {
         if (runError || !scanRun) {
           return new Response(
             JSON.stringify({ success: false, error: "Scan run not found" }),
-            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 404, headers: jsonHeaders }
           );
         }
 
@@ -838,7 +836,7 @@ serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true, report }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: jsonHeaders }
         );
       }
 
@@ -860,14 +858,14 @@ serve(async (req) => {
 
         return new Response(
           JSON.stringify({ success: true, message: "Scan cancelled" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: jsonHeaders }
         );
       }
 
       default:
         return new Response(
           JSON.stringify({ success: false, error: "Unknown action" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: jsonHeaders }
         );
     }
 
@@ -875,7 +873,7 @@ serve(async (req) => {
     console.error("Orchestrator error:", error);
     return new Response(
       JSON.stringify({ success: false, error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: jsonHeaders }
     );
   }
 });

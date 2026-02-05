@@ -2,20 +2,19 @@
  import Stripe from "stripe";
  import { createClient } from "@supabase/supabase-js";
  
- const corsHeaders = {
-   "Access-Control-Allow-Origin": "*",
-   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
- };
+// No CORS headers — this endpoint is called server-to-server by Stripe only.
+const jsonHeaders = { "Content-Type": "application/json" };
  
  const logStep = (step: string, details?: unknown) => {
    const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
    console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
  };
  
- serve(async (req) => {
-   if (req.method === "OPTIONS") {
-     return new Response(null, { headers: corsHeaders });
-   }
+serve(async (req) => {
+  // Stripe webhooks are POST only — reject anything else.
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
  
    try {
      logStep("Webhook received");
@@ -46,10 +45,10 @@
      } catch (err) {
        const message = err instanceof Error ? err.message : "Unknown error";
        logStep("Webhook signature verification failed", { message });
-       return new Response(JSON.stringify({ error: `Webhook Error: ${message}` }), {
-         status: 400,
-         headers: { ...corsHeaders, "Content-Type": "application/json" },
-       });
+        return new Response(JSON.stringify({ error: `Webhook Error: ${message}` }), {
+          status: 400,
+          headers: jsonHeaders,
+        });
      }
  
      logStep("Event verified", { type: event.type, id: event.id });
@@ -63,10 +62,10 @@
  
      if (existingEvent) {
        logStep("Event already processed", { eventId: event.id });
-       return new Response(JSON.stringify({ received: true, duplicate: true }), {
-         status: 200,
-         headers: { ...corsHeaders, "Content-Type": "application/json" },
-       });
+        return new Response(JSON.stringify({ received: true, duplicate: true }), {
+          status: 200,
+          headers: jsonHeaders,
+        });
      }
  
      // Record event for idempotency
@@ -241,16 +240,16 @@
          logStep("Unhandled event type", { type: event.type });
      }
  
-     return new Response(JSON.stringify({ received: true }), {
-       status: 200,
-       headers: { ...corsHeaders, "Content-Type": "application/json" },
-     });
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: jsonHeaders,
+      });
    } catch (error) {
      const errorMessage = error instanceof Error ? error.message : String(error);
      logStep("ERROR", { message: errorMessage });
-     return new Response(JSON.stringify({ error: errorMessage }), {
-       headers: { ...corsHeaders, "Content-Type": "application/json" },
-       status: 500,
-     });
+      return new Response(JSON.stringify({ error: errorMessage }), {
+        headers: jsonHeaders,
+        status: 500,
+      });
    }
  });

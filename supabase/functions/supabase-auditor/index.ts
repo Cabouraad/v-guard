@@ -1,10 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+// Internal worker — no CORS needed. Called server-to-server only.
+const jsonHeaders = { "Content-Type": "application/json" };
 
 type SeverityLevel = "critical" | "high" | "medium" | "low" | "info";
 type ConfidenceLevel = "high" | "medium" | "low";
@@ -475,7 +472,7 @@ async function runSupabaseAudit(
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204 });
   }
 
   try {
@@ -490,7 +487,7 @@ Deno.serve(async (req) => {
     if (!input.scan_run_id) {
       return new Response(
         JSON.stringify({ success: false, error: "Missing scan_run_id" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: jsonHeaders }
       );
     }
 
@@ -500,7 +497,7 @@ Deno.serve(async (req) => {
           success: false,
           error: "Supabase auditing requires explicit connection details (target_supabase_url and target_service_role_key). This is a V2 feature that only runs with user permission.",
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: jsonHeaders }
       );
     }
 
@@ -510,7 +507,7 @@ Deno.serve(async (req) => {
     } catch {
       return new Response(
         JSON.stringify({ success: false, error: "Invalid target_supabase_url format" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: jsonHeaders }
       );
     }
 
@@ -518,7 +515,7 @@ Deno.serve(async (req) => {
     const result = await runSupabaseAudit(localSupabase, input);
 
     return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   } catch (error) {
     console.error("Supabase auditor error:", error);
@@ -527,7 +524,7 @@ Deno.serve(async (req) => {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: jsonHeaders }
     );
   }
 });
