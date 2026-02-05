@@ -16,6 +16,7 @@ import Report from "@/pages/Report";
  import NotFound from "./pages/NotFound";
  import { SafetyLockProvider } from "@/components/safety";
  import { EvidencePanelProvider, EvidencePanel } from "@/components/evidence";
+ import { CommandPaletteProvider, CommandPalette, ShortcutsCheatSheet, GlobalKeyboardShortcuts } from "@/components/command";
 
 const queryClient = new QueryClient();
 
@@ -24,35 +25,40 @@ const queryClient = new QueryClient();
      <TooltipProvider>
        <SafetyLockProvider>
          <EvidencePanelProvider>
-           <Toaster />
-           <Sonner />
            <BrowserRouter>
-             <Routes>
-               {/* Marketing landing page */}
-               <Route path="/" element={<Landing />} />
-               
-               {/* Dashboard with nav rail */}
-               <Route path="/dashboard" element={<DashboardLayout />}>
-                 <Route index element={<DashboardOverview />} />
-                 <Route path="scans" element={<ScansView />} />
-                 <Route path="load" element={<LoadTestingView />} />
-                 <Route path="reports" element={<Navigate to="/dashboard" replace />} />
-                 <Route path="settings" element={<Navigate to="/dashboard" replace />} />
-               </Route>
+             <CommandPaletteProvider>
+               <Toaster />
+               <Sonner />
+               <GlobalKeyboardShortcuts />
+               <Routes>
+                 {/* Marketing landing page */}
+                 <Route path="/" element={<Landing />} />
+                 
+                 {/* Dashboard with nav rail */}
+                 <Route path="/dashboard" element={<DashboardLayout />}>
+                   <Route index element={<DashboardOverview />} />
+                   <Route path="scans" element={<ScansView />} />
+                   <Route path="load" element={<LoadTestingView />} />
+                   <Route path="reports" element={<Navigate to="/dashboard" replace />} />
+                   <Route path="settings" element={<Navigate to="/dashboard" replace />} />
+                 </Route>
  
-               {/* App routes with sidebar layout */}
-               <Route element={<AppLayout />}>
-                 <Route path="/projects" element={<Projects />} />
-                 <Route path="/projects/new" element={<NewProject />} />
-                 <Route path="/scans/:scanId" element={<ScanView />} />
-                 <Route path="/reports/:reportId" element={<Report />} />
-               </Route>
-               
-               <Route path="*" element={<NotFound />} />
-             </Routes>
+                 {/* App routes with sidebar layout */}
+                 <Route element={<AppLayout />}>
+                   <Route path="/projects" element={<Projects />} />
+                   <Route path="/projects/new" element={<NewProject />} />
+                   <Route path="/scans/:scanId" element={<ScanView />} />
+                   <Route path="/reports/:reportId" element={<Report />} />
+                 </Route>
+                 
+                 <Route path="*" element={<NotFound />} />
+               </Routes>
+               {/* Global Overlays */}
+               <CommandPalette />
+               <ShortcutsCheatSheet />
+               <EvidencePanel />
+             </CommandPaletteProvider>
            </BrowserRouter>
-           {/* Global Evidence Panel */}
-           <EvidencePanel />
          </EvidencePanelProvider>
        </SafetyLockProvider>
      </TooltipProvider>
