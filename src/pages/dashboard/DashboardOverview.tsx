@@ -1,16 +1,16 @@
  import { useState } from 'react';
+ import { useEvidencePanel } from '@/components/evidence';
  import { RiskTimeline } from '@/components/dashboard/RiskTimeline';
  import { FindingsPanel } from '@/components/dashboard/FindingsPanel';
- import { EvidencePanel } from '@/components/dashboard/EvidencePanel';
  import { InstrumentGauge } from '@/components/dashboard/InstrumentGauge';
  import { Shield, Activity, AlertTriangle, Clock } from 'lucide-react';
  
  export default function DashboardOverview() {
    const [selectedScanId, setSelectedScanId] = useState<string | null>('2');
-   const [evidenceOpen, setEvidenceOpen] = useState(false);
+   const { openPanel } = useEvidencePanel();
  
-   const handleSelectFinding = (findingId: string) => {
-     setEvidenceOpen(true);
+   const handleSelectFinding = (_findingId: string) => {
+     // Panel is opened by FindingsPanel via context
    };
  
    return (
@@ -107,12 +107,6 @@
              <FindingsPanel onSelectFinding={handleSelectFinding} />
            </section>
          </div>
- 
-         {/* Evidence side panel */}
-         <EvidencePanel 
-           isOpen={evidenceOpen}
-           onClose={() => setEvidenceOpen(!evidenceOpen)}
-         />
        </div>
      </div>
    );

@@ -1,7 +1,7 @@
  import { useState } from 'react';
+ import { useEvidencePanel } from '@/components/evidence';
  import { RiskTimeline } from '@/components/dashboard/RiskTimeline';
  import { FindingsPanel } from '@/components/dashboard/FindingsPanel';
- import { EvidencePanel } from '@/components/dashboard/EvidencePanel';
  import { Activity, Plus } from 'lucide-react';
  import { Button } from '@/components/ui/button';
  import { Link } from 'react-router-dom';
@@ -49,7 +49,7 @@
  
  export default function ScansView() {
    const [selectedScanId, setSelectedScanId] = useState<string | null>(null);
-   const [evidenceOpen, setEvidenceOpen] = useState(false);
+   const { openPanel } = useEvidencePanel();
  
    return (
      <div className="h-screen flex flex-col">
@@ -95,7 +95,10 @@
                  key={scan.id}
                  onClick={() => {
                    setSelectedScanId(scan.id);
-                   setEvidenceOpen(true);
+                   openPanel({
+                     tab: 'logs',
+                     filter: { correlationId: scan.id }
+                   });
                  }}
                  className={cn(
                    "border-b border-border cursor-pointer transition-colors",
@@ -121,12 +124,6 @@
            </tbody>
          </table>
        </div>
- 
-       {/* Evidence panel */}
-       <EvidencePanel 
-         isOpen={evidenceOpen}
-         onClose={() => setEvidenceOpen(false)}
-       />
      </div>
    );
  }

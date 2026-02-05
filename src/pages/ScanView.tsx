@@ -2,7 +2,6 @@
  import { useParams, Link } from 'react-router-dom';
  import { Header } from '@/components/layout/Header';
  import { ScanProgressTimeline, createTimelineSteps, TimelineStep } from '@/components/scan/ScanProgressTimeline';
- import { EvidencePanel } from '@/components/dashboard/EvidencePanel';
  import { Button } from '@/components/ui/button';
  import { StatusBadge } from '@/components/ui/status-badge';
  import { ScoreRing } from '@/components/ui/score-ring';
@@ -40,8 +39,6 @@
    const [scanStatus, setScanStatus] = useState<ScanStatus>('running');
    const [elapsedTime, setElapsedTime] = useState(0);
    const [scores, setScores] = useState({ security: 0, reliability: 0 });
-   const [selectedStep, setSelectedStep] = useState<TimelineStep | null>(null);
-   const [showEvidencePanel, setShowEvidencePanel] = useState(false);
    const { state: safetyState, getAuditString } = useSafetyLock();
  
    // Simulate scan progress with timestamps
@@ -115,16 +112,6 @@
      safetyState.enabledModules
    );
  
-   const handleStepClick = (step: TimelineStep) => {
-     setSelectedStep(step);
-     setShowEvidencePanel(true);
-   };
- 
-   const handleViewLogs = (step: TimelineStep) => {
-     setSelectedStep(step);
-     setShowEvidencePanel(true);
-   };
- 
    return (
      <div className="min-h-screen bg-background flex flex-col">
        <Header 
@@ -195,8 +182,6 @@
                  </div>
                  <ScanProgressTimeline
                    steps={timelineSteps}
-                   onStepClick={handleStepClick}
-                   onViewLogs={handleViewLogs}
                  />
                </div>
  
@@ -236,15 +221,6 @@
            </div>
          </div>
  
-         {/* Evidence Panel */}
-         {showEvidencePanel && (
-           <div className="w-[400px] border-l border-border flex-shrink-0">
-             <EvidencePanel 
-               onClose={() => setShowEvidencePanel(false)}
-               filterModule={selectedStep?.moduleKey}
-             />
-           </div>
-         )}
        </div>
      </div>
    );
