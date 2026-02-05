@@ -1,10 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+// Internal worker — no CORS needed. Called server-to-server only.
+const jsonHeaders = { "Content-Type": "application/json" };
 
 // Types
 interface SecurityWorkerInput {
@@ -649,7 +646,7 @@ async function checkCommonEndpoints(baseUrl: string, doNotTest: string[]): Promi
 // Main handler
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204 });
   }
 
   try {
@@ -674,7 +671,7 @@ Deno.serve(async (req) => {
        console.error("[SecurityWorker] Gating check error:", gatingError);
        return new Response(
          JSON.stringify({ success: false, error: "Failed to verify entitlements" }),
-         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+         { status: 500, headers: jsonHeaders }
        );
      }
  
@@ -682,7 +679,7 @@ Deno.serve(async (req) => {
      if (!gating) {
        return new Response(
          JSON.stringify({ success: false, error: "Scan run not found" }),
-         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+         { status: 404, headers: jsonHeaders }
        );
      }
  
@@ -709,7 +706,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         success: false,
         error: "Invalid base URL provided"
-      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }), { headers: jsonHeaders });
     }
     
     // Run safe security checks
@@ -819,7 +816,7 @@ Deno.serve(async (req) => {
       findings,
       not_tested: notTested,
     }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
     
   } catch (error) {
@@ -829,7 +826,7 @@ Deno.serve(async (req) => {
       error: error instanceof Error ? error.message : "Unknown error"
     }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: jsonHeaders,
     });
   }
 });

@@ -1,10 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+// Internal worker — no CORS needed. Called server-to-server only.
+const jsonHeaders = { "Content-Type": "application/json" };
 
 type SeverityLevel = "critical" | "high" | "medium" | "low" | "info";
 type ConfidenceLevel = "high" | "medium" | "low";
@@ -867,7 +864,7 @@ function escapeHtml(text: string): string {
 // Main handler
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204 });
   }
 
   try {
@@ -880,7 +877,7 @@ Deno.serve(async (req) => {
     if (!scan_run_id) {
       return new Response(
         JSON.stringify({ success: false, error: "Missing scan_run_id" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: jsonHeaders }
       );
     }
 
@@ -894,7 +891,7 @@ Deno.serve(async (req) => {
     if (scanError || !scanRun) {
       return new Response(
         JSON.stringify({ success: false, error: "Scan run not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 404, headers: jsonHeaders }
       );
     }
 
@@ -939,14 +936,14 @@ Deno.serve(async (req) => {
     // Return based on format
     if (format === "json") {
       return new Response(JSON.stringify({ success: true, report: reportModel }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: jsonHeaders,
       });
     }
 
     if (format === "html") {
       const html = generateHtmlReport(reportModel);
       return new Response(html, {
-        headers: { ...corsHeaders, "Content-Type": "text/html" },
+        headers: { ...jsonHeaders, "Content-Type": "text/html" },
       });
     }
 
@@ -958,7 +955,7 @@ Deno.serve(async (req) => {
         report: reportModel,
         html,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: jsonHeaders }
     );
   } catch (error) {
     console.error("Report generator error:", error);
@@ -967,7 +964,7 @@ Deno.serve(async (req) => {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: jsonHeaders }
     );
   }
 });
