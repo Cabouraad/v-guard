@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Shield, Lock, Unlock } from 'lucide-react';
+import { Header } from '@/components/layout/Header';
+import { Activity, Lock, Unlock, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import type { ScanRun, Project } from '@/types/database';
 
@@ -27,49 +28,73 @@ export default function ScanLog() {
   });
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Shield className="w-6 h-6 text-primary" />
-        <h1 className="font-mono text-xl font-bold">SCAN LOG</h1>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header 
+        title="Scan Log" 
+        subtitle="Chronological record of all scan executions"
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-mono text-sm">Recent Scan Runs</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="flex flex-col h-[calc(100vh-80px)]">
+        {/* Header bar */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center gap-4">
+            <Activity className="w-5 h-5 text-primary" />
+            <span className="font-mono text-xs text-muted-foreground">
+              {isLoading ? '—' : `${scanRuns?.length ?? 0} RUNS RECORDED`}
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto">
           {isLoading ? (
-            <div className="space-y-3">
+            <div className="p-6 space-y-3">
               {[...Array(5)].map((_, i) => (
                 <Skeleton key={i} className="h-16 w-full" />
               ))}
             </div>
           ) : !scanRuns?.length ? (
-            <p className="text-muted-foreground text-sm py-8 text-center">
-              No scan runs yet. Create a project and run a scan to get started.
-            </p>
+            /* Empty State */
+            <div className="flex flex-col items-center justify-center h-full px-6 text-center">
+              <div className="w-16 h-16 rounded-sm border border-dashed border-border flex items-center justify-center mb-6">
+                <Activity className="w-8 h-8 text-muted-foreground/50" />
+              </div>
+              <h2 className="font-mono text-sm text-foreground mb-2">
+                NO SCAN RUNS RECORDED
+              </h2>
+              <p className="font-mono text-xs text-muted-foreground max-w-md mb-6 leading-relaxed">
+                Scan execution history will appear here once a probe has been queued against 
+                an authorized target. Each run logs status, duration, and safety mode.
+              </p>
+              <Link to="/dashboard/targets">
+                <Button variant="outline" size="sm" className="gap-2 font-mono text-xs">
+                  <Plus className="w-4 h-4" />
+                  AUTHORIZE A TARGET
+                </Button>
+              </Link>
+            </div>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-border">
               {scanRuns.map((run) => (
                 <Link
                   key={run.id}
                   to={`/dashboard/scan-log/${run.id}`}
-                  className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-4 px-6 py-4 hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium truncate">
-                        {run.project?.name || 'Unknown Project'}
+                      <span className="font-mono text-sm font-medium truncate text-foreground">
+                        {run.project?.name || 'Unknown Target'}
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-[10px] font-mono text-muted-foreground uppercase">
                         {run.project?.environment}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-3 mt-1 text-xs font-mono text-muted-foreground">
                       <span className="flex items-center gap-1">
                         {run.allow_advanced_tests ? (
                           <>
-                            <Unlock className="w-3 h-3 text-amber-500" />
+                            <Unlock className="w-3 h-3 text-severity-medium" />
                             ADVANCED
                           </>
                         ) : (
@@ -79,11 +104,11 @@ export default function ScanLog() {
                           </>
                         )}
                       </span>
-                      <span>•</span>
+                      <span className="text-border">•</span>
                       <span>
                         {run.started_at
                           ? format(new Date(run.started_at), 'MMM d, yyyy HH:mm')
-                          : 'Not started'}
+                          : 'PENDING'}
                       </span>
                       {run.ended_at && (
                         <>
@@ -98,8 +123,8 @@ export default function ScanLog() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
