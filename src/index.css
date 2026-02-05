@@ -35,7 +35,7 @@
     --input: 217 33% 20%;
     --ring: 173 80% 40%;
 
-    --radius: 0.5rem;
+    --radius: 0.125rem;
 
     /* Severity colors */
     --severity-critical: 0 84% 60%;
@@ -91,6 +91,7 @@
     --accent-foreground: 210 40% 98%;
     --border: 217 33% 85%;
     --input: 217 33% 85%;
+    --radius: 0.125rem;
   }
 }
 
