@@ -660,11 +660,46 @@ Deno.serve(async (req) => {
     const input: SecurityWorkerInput = await req.json();
     const { scan_run_id, base_url, app_profile, mode, safety_config } = input;
     
+     // ============================================
+     // SERVER-SIDE ENTITLEMENT RE-CHECK
+     // Workers must verify gating before running
+     // ============================================
+     const { data: gatingCheck, error: gatingError } = await supabase
+       .rpc("can_run_gated_task", {
+         p_scan_run_id: scan_run_id,
+         p_task_type: "security_check",
+       });
+ 
+     if (gatingError) {
+       console.error("[SecurityWorker] Gating check error:", gatingError);
+       return new Response(
+         JSON.stringify({ success: false, error: "Failed to verify entitlements" }),
+         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     const gating = gatingCheck?.[0];
+     if (!gating) {
+       return new Response(
+         JSON.stringify({ success: false, error: "Scan run not found" }),
+         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     console.log(`[SecurityWorker] Gating check: tier=${gating.tier_name}, allowed=${gating.allowed}`);
+ 
+     // Override safety_config with server-verified entitlements
+     const verifiedSafetyConfig = {
+       ...safety_config,
+       allow_advanced_tests: safety_config.allow_advanced_tests && gating.allow_soak, // Only if tier allows
+       max_rps: Math.min(safety_config.max_rps, gating.max_rps),
+     };
+ 
     const findings: Finding[] = [];
     const notTested: NotTestedItem[] = [];
     
     console.log(`[SecurityWorker] Starting security scan for ${base_url}`);
-    console.log(`[SecurityWorker] Mode: ${mode}, Environment: ${safety_config.environment}`);
+     console.log(`[SecurityWorker] Mode: ${mode}, Environment: ${verifiedSafetyConfig.environment}, Tier: ${gating.tier_name}`);
     
     // Validate URL
     let parsedUrl: URL;
