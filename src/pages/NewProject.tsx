@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SubscriptionBanner } from '@/components/subscription';
+import { useSubscription } from '@/hooks/useSubscription';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Globe, 
   Shield, 
@@ -17,13 +21,17 @@ import {
   Info,
   Lock,
   Server,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { EnvironmentType, ScanMode } from '@/types/database';
 
 export default function NewProject() {
   const navigate = useNavigate();
+  const { subscription, loading: subLoading, createCheckout, openPortal, checkSubscription } = useSubscription();
+  const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -34,11 +42,25 @@ export default function NewProject() {
     graphqlEndpoint: '',
     maxRps: 10,
     doNotTestRoutes: [] as string[],
-    enableAuth: false,
-    authToken: '',
+    enableSoak: false,
+    enableStress: false,
+    approveForProduction: false,
   });
 
   const [newRoute, setNewRoute] = useState('');
+
+  // Reset gated controls if subscription changes to non-production
+  useEffect(() => {
+    if (!subscription.allow_soak) {
+      setFormData(prev => ({ ...prev, enableSoak: false }));
+    }
+    if (!subscription.allow_stress) {
+      setFormData(prev => ({ ...prev, enableStress: false }));
+    }
+  }, [subscription.allow_soak, subscription.allow_stress]);
+
+  const isProductionTier = subscription.tier === 'production';
+  const canSubmit = subscription.subscribed && subscription.scans_remaining > 0;
 
   const addDoNotTestRoute = () => {
     if (newRoute && !formData.doNotTestRoutes.includes(newRoute)) {
@@ -57,8 +79,9 @@ export default function NewProject() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError(null);
     
     if (!formData.name || !formData.baseUrl) {
       toast.error('Required fields missing: Target identifier and URL required to authorize scan.');
@@ -73,8 +96,57 @@ export default function NewProject() {
       return;
     }
 
-    toast.success('Target authorized. Scan queued for execution.');
-    navigate('/scans/demo');
+    if (!canSubmit) {
+      toast.error('Subscription required or scan limit reached.');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-scan-run', {
+        body: {
+          project: {
+            name: formData.name,
+            base_url: formData.baseUrl,
+            environment: formData.environment,
+            api_base_path: formData.apiBasePath || null,
+            graphql_endpoint: formData.graphqlEndpoint || null,
+            max_rps: formData.maxRps,
+            do_not_test_routes: formData.doNotTestRoutes,
+          },
+          scan_config: {
+            mode: formData.scanMode,
+            enable_soak: formData.enableSoak,
+            enable_stress: formData.enableStress,
+            approved_for_production: formData.approveForProduction,
+          },
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data?.error) {
+        // Show server error verbatim
+        setServerError(data.error);
+        toast.error(data.error);
+        return;
+      }
+
+      // Refresh subscription to update usage
+      await checkSubscription();
+
+      toast.success('Target authorized. Scan queued for execution.');
+      navigate(`/scans/${data.scan_run_id}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create scan';
+      setServerError(message);
+      toast.error(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -203,7 +275,6 @@ export default function NewProject() {
                     onClick={() => setFormData(prev => ({ 
                       ...prev, 
                       scanMode: option.mode,
-                      enableAuth: option.mode === 'authenticated'
                     }))}
                     className={`relative p-4 border text-left transition-all ${
                       option.disabled 
@@ -307,6 +378,137 @@ export default function NewProject() {
 
             <Separator />
 
+            {/* Section: Advanced Testing (Gated) */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-4 h-4 text-primary" />
+                <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                  ADVANCED TESTING
+                </h2>
+                {!isProductionTier && (
+                  <Badge variant="outline" className="text-severity-medium border-severity-medium">
+                    PRODUCTION TIER
+                  </Badge>
+                )}
+              </div>
+
+              <TooltipProvider>
+                <div className="space-y-3">
+                  {/* Soak Test Toggle */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={!isProductionTier}
+                        onClick={() => setFormData(prev => ({ ...prev, enableSoak: !prev.enableSoak }))}
+                        className={`w-full p-3 border text-left transition-all ${
+                          !isProductionTier
+                            ? 'opacity-50 cursor-not-allowed border-border'
+                            : formData.enableSoak
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-mono text-xs uppercase tracking-wider">SOAK TEST</h4>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              Extended duration stability testing
+                            </p>
+                          </div>
+                          <Badge variant={formData.enableSoak ? "default" : "secondary"} className="text-[10px]">
+                            {formData.enableSoak ? 'ON' : 'OFF'}
+                          </Badge>
+                        </div>
+                      </button>
+                    </TooltipTrigger>
+                    {!isProductionTier && (
+                      <TooltipContent>
+                        <p>Upgrade to Production tier to enable soak testing</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+
+                  {/* Stress Test Toggle */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={!isProductionTier}
+                        onClick={() => setFormData(prev => ({ ...prev, enableStress: !prev.enableStress }))}
+                        className={`w-full p-3 border text-left transition-all ${
+                          !isProductionTier
+                            ? 'opacity-50 cursor-not-allowed border-border'
+                            : formData.enableStress
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-mono text-xs uppercase tracking-wider">STRESS TEST</h4>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              High-load breaking point analysis
+                            </p>
+                          </div>
+                          <Badge variant={formData.enableStress ? "default" : "secondary"} className="text-[10px]">
+                            {formData.enableStress ? 'ON' : 'OFF'}
+                          </Badge>
+                        </div>
+                      </button>
+                    </TooltipTrigger>
+                    {!isProductionTier && (
+                      <TooltipContent>
+                        <p>Upgrade to Production tier to enable stress testing</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+
+                  {/* Production Approval Toggle */}
+                  {formData.environment === 'production' && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          disabled={!isProductionTier}
+                          onClick={() => setFormData(prev => ({ ...prev, approveForProduction: !prev.approveForProduction }))}
+                          className={`w-full p-3 border text-left transition-all ${
+                            !isProductionTier
+                              ? 'opacity-50 cursor-not-allowed border-border'
+                              : formData.approveForProduction
+                                ? 'border-severity-critical bg-severity-critical/10'
+                                : 'border-border hover:border-severity-critical/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-mono text-xs uppercase tracking-wider text-severity-critical">APPROVE PRODUCTION</h4>
+                              <p className="text-[10px] text-muted-foreground mt-1">
+                                I confirm this target is authorized for active testing
+                              </p>
+                            </div>
+                            <Badge 
+                              variant={formData.approveForProduction ? "destructive" : "secondary"} 
+                              className="text-[10px]"
+                            >
+                              {formData.approveForProduction ? 'APPROVED' : 'NOT SET'}
+                            </Badge>
+                          </div>
+                        </button>
+                      </TooltipTrigger>
+                      {!isProductionTier && (
+                        <TooltipContent>
+                          <p>Upgrade to Production tier to approve production testing</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  )}
+                </div>
+              </TooltipProvider>
+            </section>
+
+            <Separator />
+
             {/* Section: API Endpoints */}
             <section>
               <div className="flex items-center gap-2 mb-4">
@@ -349,7 +551,17 @@ export default function NewProject() {
 
         {/* Right Panel - Summary & Actions */}
         <div className="w-80 bg-muted/20 flex flex-col">
-          <div className="p-6 flex-1">
+          <div className="p-6 flex-1 overflow-auto">
+            {/* Subscription Banner */}
+            <div className="mb-6">
+              <SubscriptionBanner
+                subscription={subscription}
+                loading={subLoading}
+                onUpgrade={() => createCheckout('production')}
+                onManageBilling={openPortal}
+              />
+            </div>
+
             <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-6">
               SCAN CONFIGURATION
             </h3>
@@ -420,12 +632,51 @@ export default function NewProject() {
           </div>
 
           {/* Actions */}
-          <div className="p-6 border-t border-border space-y-2">
-            <Button type="submit" className="w-full gap-2">
-              <Shield className="w-4 h-4" />
-              AUTHORIZE & QUEUE
-              <ChevronRight className="w-4 h-4 ml-auto" />
+          <div className="p-6 border-t border-border space-y-3">
+            {/* Server Error Display */}
+            {serverError && (
+              <div className="p-3 bg-destructive/10 border border-destructive/30 text-xs">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-mono text-destructive uppercase text-[10px]">SERVER ERROR</p>
+                    <p className="text-muted-foreground mt-1">{serverError}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <Button 
+              type="submit" 
+              className="w-full gap-2"
+              disabled={!canSubmit || submitting}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  AUTHORIZING...
+                </>
+              ) : (
+                <>
+                  <Shield className="w-4 h-4" />
+                  AUTHORIZE & QUEUE
+                  <ChevronRight className="w-4 h-4 ml-auto" />
+                </>
+              )}
             </Button>
+
+            {!subscription.subscribed && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => createCheckout('standard')} 
+                className="w-full gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Subscribe to Scan
+              </Button>
+            )}
+
             <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="w-full">
               ABORT
             </Button>

@@ -114,21 +114,37 @@
        endDate: subscriptionEnd 
      });
  
-     // Calculate entitlements based on tier
+// Get current period start for usage tracking
+const periodStart = new Date(subscription.current_period_end * 1000);
+periodStart.setMonth(periodStart.getMonth() - 1);
+const periodStartStr = periodStart.toISOString().split("T")[0];
+
+// Get monthly usage
+const { data: usageData } = await supabaseClient.rpc("get_monthly_usage", {
+  p_user_id: user.id,
+  p_period_start: periodStartStr,
+});
+const scansUsed = usageData ?? 0;
+
+// Calculate entitlements based on tier
      const isProduction = tier === "production";
-     const entitlements = {
-       subscribed: true,
-       tier,
-       price_id: priceId,
-       subscription_end: subscriptionEnd,
-       cancel_at_period_end: subscription.cancel_at_period_end,
-       scan_limit: isProduction ? 15 : 5,
-       allow_soak: isProduction,
-       allow_stress: isProduction,
-       priority_queue: isProduction,
-       retention_days: isProduction ? 180 : 30,
-       max_concurrency: isProduction ? 5 : 2,
-     };
+const scanLimit = isProduction ? 15 : 5;
+const entitlements = {
+  subscribed: true,
+  tier,
+  price_id: priceId,
+  subscription_end: subscriptionEnd,
+  cancel_at_period_end: subscription.cancel_at_period_end,
+  scan_limit: scanLimit,
+  scans_used: scansUsed,
+  scans_remaining: Math.max(0, scanLimit - scansUsed),
+  period_reset_date: subscriptionEnd,
+  allow_soak: isProduction,
+  allow_stress: isProduction,
+  priority_queue: isProduction,
+  retention_days: isProduction ? 180 : 30,
+  max_concurrency: isProduction ? 5 : 2,
+};
  
      return new Response(JSON.stringify(entitlements), {
        headers: { ...corsHeaders, "Content-Type": "application/json" },
