@@ -26,7 +26,9 @@
    errorMessage?: string;
    errorDetail?: string;
    isAdvanced?: boolean;
-   skippedReason?: 'safety_lock' | 'not_configured' | 'guardrail' | 'dependency_failed';
+  skippedReason?: 'safety_lock' | 'not_configured' | 'guardrail' | 'dependency_failed' | 'operator_halt';
+  haltedBy?: string;
+  haltedAt?: string;
  }
  
  interface ScanProgressTimelineProps {
@@ -99,6 +101,8 @@
        return 'Skipped (Guardrail)';
      case 'dependency_failed':
        return 'Skipped (Dependency Failed)';
+    case 'operator_halt':
+      return 'Halted by Operator';
      default:
        return 'Skipped';
    }
@@ -208,14 +212,21 @@
                  </p>
  
                  {/* Skip reason */}
-                 {isSkipped && (
+                  {(isSkipped || step.status === 'canceled') && (
                    <div className="flex items-center gap-1.5 mt-1.5">
-                     {step.skippedReason === 'safety_lock' && (
-                       <ShieldOff className="w-3 h-3 text-severity-medium" />
-                     )}
+                      {step.skippedReason === 'safety_lock' ? (
+                        <ShieldOff className="w-3 h-3 text-severity-medium" />
+                      ) : step.skippedReason === 'operator_halt' ? (
+                        <XCircle className="w-3 h-3 text-severity-medium" />
+                      ) : null}
                      <span className="text-[10px] font-mono text-severity-medium">
                        {getSkipLabel(step.skippedReason)}
                      </span>
+                      {step.haltedBy && (
+                        <span className="text-[10px] font-mono text-muted-foreground">
+                          — {step.haltedBy}
+                        </span>
+                      )}
                    </div>
                  )}
  
