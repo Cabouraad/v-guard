@@ -68,7 +68,7 @@ const App = () => (
                       <Route path="evidence/:scanRunId" element={<Evidence />} />
                       <Route path="config" element={<Config />} />
                       
-                      {/* Additional routes within dashboard */}
+                      {/* Scan view (for new/running scans) */}
                       <Route path="scans/:scanId" element={<ScanView />} />
                       <Route path="reports/:reportId" element={<Report />} />
                     </Route>

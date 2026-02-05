@@ -1,23 +1,23 @@
-import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SeverityBadge } from '@/components/ui/severity-badge';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { FileText, ChevronDown, ChevronRight, Shield } from 'lucide-react';
+import { FileText, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { ScanRun, ScanFinding, Project, ScanArtifact } from '@/types/database';
 
 function redactSecrets(text: string | null | undefined): string {
   if (!text) return '';
-  // Redact common secret patterns
   return text
     .replace(/Bearer\s+[A-Za-z0-9\-_.]+/gi, 'Bearer [REDACTED]')
     .replace(/api[_-]?key[=:]\s*["']?[A-Za-z0-9\-_.]+["']?/gi, 'api_key=[REDACTED]')
@@ -27,8 +27,8 @@ function redactSecrets(text: string | null | undefined): string {
 }
 
 export default function Evidence() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const selectedScanRunId = searchParams.get('scanRunId');
+  const { scanRunId } = useParams<{ scanRunId?: string }>();
+  const navigate = useNavigate();
   const [selectedFinding, setSelectedFinding] = useState<ScanFinding | null>(null);
   const [expandedFindings, setExpandedFindings] = useState<Set<string>>(new Set());
 
@@ -49,33 +49,33 @@ export default function Evidence() {
 
   // Fetch findings for selected scan run
   const { data: findings, isLoading: findingsLoading } = useQuery({
-    queryKey: ['evidence-findings', selectedScanRunId],
+    queryKey: ['evidence-findings', scanRunId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('scan_findings')
         .select('*')
-        .eq('scan_run_id', selectedScanRunId!)
+        .eq('scan_run_id', scanRunId!)
         .order('severity', { ascending: true });
 
       if (error) throw error;
       return data as ScanFinding[];
     },
-    enabled: !!selectedScanRunId,
+    enabled: !!scanRunId,
   });
 
   // Fetch artifacts for selected scan run
   const { data: artifacts } = useQuery({
-    queryKey: ['evidence-artifacts', selectedScanRunId],
+    queryKey: ['evidence-artifacts', scanRunId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('scan_artifacts')
         .select('*')
-        .eq('scan_run_id', selectedScanRunId!);
+        .eq('scan_run_id', scanRunId!);
 
       if (error) throw error;
       return data as ScanArtifact[];
     },
-    enabled: !!selectedScanRunId,
+    enabled: !!scanRunId,
   });
 
   const toggleFinding = (id: string) => {
@@ -88,11 +88,16 @@ export default function Evidence() {
   };
 
   const selectScanRun = (id: string) => {
-    setSearchParams({ scanRunId: id });
+    navigate(`/dashboard/evidence/${id}`);
     setSelectedFinding(null);
   };
 
-  const selectedRun = scanRuns?.find((r) => r.id === selectedScanRunId);
+  const clearSelection = () => {
+    navigate('/dashboard/evidence');
+    setSelectedFinding(null);
+  };
+
+  const selectedRun = scanRuns?.find((r) => r.id === scanRunId);
 
   return (
     <div className="flex h-[calc(100vh-4rem)]">
@@ -100,11 +105,16 @@ export default function Evidence() {
       <div className="flex-1 p-6 overflow-auto">
         <div className="max-w-4xl mx-auto space-y-6">
           <div className="flex items-center gap-3">
+            {scanRunId && (
+              <Button variant="ghost" size="icon" onClick={clearSelection}>
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
             <FileText className="w-6 h-6 text-primary" />
             <h1 className="font-mono text-xl font-bold">EVIDENCE</h1>
           </div>
 
-          {!selectedScanRunId ? (
+          {!scanRunId ? (
             <Card>
               <CardHeader>
                 <CardTitle className="font-mono text-sm">Select a Scan Run</CardTitle>
@@ -117,9 +127,16 @@ export default function Evidence() {
                     ))}
                   </div>
                 ) : !scanRuns?.length ? (
-                  <p className="text-muted-foreground text-sm py-4 text-center">
-                    No scan runs available.
-                  </p>
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground text-sm mb-4">
+                      No scan runs available.
+                    </p>
+                    <Link to="/dashboard/targets/new">
+                      <Button variant="outline" size="sm">
+                        Authorize a Scan
+                      </Button>
+                    </Link>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {scanRuns.map((run) => (
@@ -160,12 +177,11 @@ export default function Evidence() {
                     </div>
                     <div className="flex items-center gap-2">
                       <StatusBadge status={selectedRun?.status || 'pending'} />
-                      <button
-                        onClick={() => setSearchParams({})}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Change
-                      </button>
+                      <Link to={`/dashboard/scan-log/${scanRunId}`}>
+                        <Button variant="ghost" size="sm" className="text-xs">
+                          View Timeline
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </CardContent>
@@ -234,11 +250,11 @@ export default function Evidence() {
                               <CollapsibleContent>
                                 <div className="px-3 pb-3 pt-0 space-y-2 border-t">
                                   <p className="text-sm mt-2">{finding.description}</p>
-                                    {finding.evidence_redacted && (
-                                      <div className="bg-muted p-2 rounded text-xs font-mono overflow-x-auto">
-                                        <pre>{redactSecrets(typeof finding.evidence_redacted === 'string' ? finding.evidence_redacted : JSON.stringify(finding.evidence_redacted, null, 2))}</pre>
-                                      </div>
-                                    )}
+                                  {finding.evidence_redacted && (
+                                    <div className="bg-muted p-2 rounded text-xs font-mono overflow-x-auto">
+                                      <pre>{redactSecrets(typeof finding.evidence_redacted === 'string' ? finding.evidence_redacted : JSON.stringify(finding.evidence_redacted, null, 2))}</pre>
+                                    </div>
+                                  )}
                                   {finding.fix_recommendation && (
                                     <div className="mt-2">
                                       <p className="text-xs font-medium text-muted-foreground">

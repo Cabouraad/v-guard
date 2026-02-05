@@ -1,12 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ScanProgress } from '@/components/scan/ScanProgress';
+import { ScanProgressTimeline, createTimelineSteps } from '@/components/scan/ScanProgressTimeline';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, AlertTriangle, FileText, Lock, Unlock } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, FileText, Lock, Unlock, Globe, ExternalLink } from 'lucide-react';
 import { format } from 'date-fns';
 import type { ScanRun, ScanTask, Project } from '@/types/database';
 
@@ -56,20 +56,27 @@ export default function ScanLogDetail() {
     return (
       <div className="p-6 max-w-4xl mx-auto">
         <p className="text-muted-foreground">Scan run not found.</p>
-        <Link to="/scan-log" className="text-primary hover:underline text-sm">
+        <Link to="/dashboard/scan-log" className="text-primary hover:underline text-sm">
           ← Back to Scan Log
         </Link>
       </div>
     );
   }
 
-  const failedTasks = tasks?.filter((t) => t.status === 'failed') || [];
+  // Create timeline steps from tasks
+  const safetyLocked = !scanRun.allow_advanced_tests;
+  const config = scanRun.config as { enable_soak?: boolean; enable_stress?: boolean } | null;
+  const timelineSteps = createTimelineSteps(
+    tasks || [],
+    safetyLocked,
+    { soak: config?.enable_soak, stress: config?.enable_stress }
+  );
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link to="/scan-log">
+        <Link to="/dashboard/scan-log">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -79,7 +86,10 @@ export default function ScanLogDetail() {
             {scanRun.project?.name || 'Scan Run'}
           </h1>
           <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-            <span>{scanRun.project?.environment}</span>
+            <span className="flex items-center gap-1">
+              <Globe className="w-3 h-3" />
+              {scanRun.project?.environment}
+            </span>
             <span className="flex items-center gap-1">
               {scanRun.allow_advanced_tests ? (
                 <>
@@ -103,6 +113,34 @@ export default function ScanLogDetail() {
         <StatusBadge status={scanRun.status} />
       </div>
 
+      {/* Target Info */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Globe className="w-5 h-5 text-muted-foreground" />
+              <div>
+                <p className="font-mono text-sm">{scanRun.project?.base_url}</p>
+                <p className="text-xs text-muted-foreground">
+                  Mode: {scanRun.mode}
+                </p>
+              </div>
+            </div>
+            {scanRun.project?.base_url && (
+              <a
+                href={scanRun.project.base_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                Open Target
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Error Summary */}
       {scanRun.error_summary && (
         <Card className="border-severity-critical/30 bg-severity-critical/5">
@@ -123,53 +161,57 @@ export default function ScanLogDetail() {
         </Card>
       )}
 
-      {/* Task Progress */}
+      {/* Progress Timeline */}
       <Card>
         <CardHeader>
-          <CardTitle className="font-mono text-sm">Task Progress</CardTitle>
+          <CardTitle className="font-mono text-sm">Execution Timeline</CardTitle>
         </CardHeader>
         <CardContent>
-          {tasks?.length ? (
-            <ScanProgress tasks={tasks} />
+          {timelineSteps.length ? (
+            <ScanProgressTimeline 
+              steps={timelineSteps}
+              onViewLogs={(step) => {
+                // Navigate to evidence with filter
+                window.location.href = `/dashboard/evidence/${scanRun.id}?task=${step.moduleKey}`;
+              }}
+            />
           ) : (
-            <p className="text-muted-foreground text-sm">No tasks recorded.</p>
+            <p className="text-muted-foreground text-sm">No tasks recorded yet.</p>
           )}
         </CardContent>
       </Card>
 
-      {/* Failed Tasks Detail */}
-      {failedTasks.length > 0 && (
+      {/* Scores (if completed) */}
+      {scanRun.status === 'completed' && (
         <Card>
           <CardHeader>
-            <CardTitle className="font-mono text-sm text-severity-critical">
-              Failed Tasks ({failedTasks.length})
-            </CardTitle>
+            <CardTitle className="font-mono text-sm">Scores</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {failedTasks.map((task) => (
-              <div
-                key={task.id}
-                className="p-3 rounded border border-severity-critical/20 bg-severity-critical/5"
-              >
-                <p className="font-medium text-sm">{task.task_type}</p>
-                {task.error_message && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {task.error_message}
-                  </p>
-                )}
-                {task.error_detail && (
-                  <pre className="mt-2 text-xs bg-muted p-2 rounded overflow-x-auto max-h-32">
-                    {task.error_detail}
-                  </pre>
-                )}
+          <CardContent>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="text-center">
+                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
+                  Security
+                </p>
+                <p className="text-3xl font-mono font-bold text-primary">
+                  {scanRun.security_score ?? '—'}
+                </p>
               </div>
-            ))}
+              <div className="text-center">
+                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">
+                  Reliability
+                </p>
+                <p className="text-3xl font-mono font-bold text-primary">
+                  {scanRun.reliability_score ?? '—'}
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Link to Evidence */}
-      <Link to={`/evidence?scanRunId=${scanRun.id}`}>
+      <Link to={`/dashboard/evidence/${scanRun.id}`}>
         <Button variant="outline" className="gap-2">
           <FileText className="w-4 h-4" />
           View Evidence & Findings
