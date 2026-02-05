@@ -16,6 +16,10 @@ import Projects from "@/pages/Projects";
 import NewProject from "@/pages/NewProject";
 import ScanView from "@/pages/ScanView";
 import Report from "@/pages/Report";
+import ScanLog from "@/pages/ScanLog";
+import ScanLogDetail from "@/pages/ScanLogDetail";
+import Evidence from "@/pages/Evidence";
+import Config from "@/pages/Config";
  import NotFound from "./pages/NotFound";
  import { SafetyLockProvider } from "@/components/safety";
  import { EvidencePanelProvider, EvidencePanel } from "@/components/evidence";
@@ -57,6 +61,10 @@ const queryClient = new QueryClient();
                     <Route path="/projects/new" element={<NewProject />} />
                     <Route path="/scans/:scanId" element={<ScanView />} />
                     <Route path="/reports/:reportId" element={<Report />} />
+                    <Route path="/scan-log" element={<ScanLog />} />
+                    <Route path="/scan-log/:scanRunId" element={<ScanLogDetail />} />
+                    <Route path="/evidence" element={<Evidence />} />
+                    <Route path="/config" element={<Config />} />
                   </Route>
                   
                   <Route path="*" element={<NotFound />} />
