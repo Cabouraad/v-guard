@@ -14,11 +14,11 @@ import { HaltScanDialog } from '@/components/scan/HaltScanDialog';
    Clock,
    Terminal
  } from 'lucide-react';
- import type { ScanTask, ScanStatus } from '@/types/database';
- import { ScanSafetyBadge, useSafetyLock } from '@/components/safety';
+import type { ScanTask, ScanStatus } from '@/types/database';
+  import { ScanSafetyBadge, useSafetyLock } from '@/components/safety';
 import { useRunWindow, WindowStatusBadge } from '@/components/scheduling';
- import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { useHaltScan } from '@/hooks/useHaltScan';
+  import { cn } from '@/lib/utils';
  
  // Simulated scan tasks for demo with timestamps
  const createInitialTasks = (): ScanTask[] => {
@@ -42,7 +42,8 @@ import { toast } from 'sonner';
    const [scanStatus, setScanStatus] = useState<ScanStatus>('running');
    const [elapsedTime, setElapsedTime] = useState(0);
    const [scores, setScores] = useState({ security: 0, reliability: 0 });
-   const { state: safetyState, getAuditString } = useSafetyLock();
+  const { halt: haltScanBackend, isHalting } = useHaltScan();
+  const { state: safetyState, getAuditString } = useSafetyLock();
   const { window: runWindow, isWithinWindow, formatNextWindowOpen } = useRunWindow();
   const [haltDialogOpen, setHaltDialogOpen] = useState(false);
   const [haltInfo, setHaltInfo] = useState<{
@@ -79,51 +80,45 @@ import { toast } from 'sonner';
   }, [tasks]);
 
   // Handle halt scan
-  const handleHaltScan = useCallback((reason: string) => {
-    const now = new Date().toISOString();
+  const handleHaltScan = useCallback(async (reason: string) => {
     const currentStage = getCurrentStage();
     
-    // Build audit log
-    const auditEntry = {
-      reason: reason || 'No reason provided',
-      haltedAt: now,
-      haltedBy: 'Operator (User)',
-      stageWhenHalted: currentStage,
-    };
+    // Call backend halt endpoint
+    const audit = await haltScanBackend(scanId || 'demo', reason);
     
-    setHaltInfo(auditEntry);
+    if (!audit) return; // Hook already showed error toast
     
-    // Update all tasks
+    setHaltInfo({
+      reason: audit.reason,
+      haltedAt: audit.halted_at,
+      haltedBy: audit.halted_by,
+      stageWhenHalted: audit.stage_when_halted,
+    });
+    
+    // Update local task state to reflect halt
     setTasks(prev => prev.map(task => {
       if (task.status === 'running') {
-        // Mark running task as canceled with error detail
         return {
           ...task,
           status: 'canceled' as const,
-          ended_at: now,
+          ended_at: audit.halted_at,
           error_message: 'Halted by operator',
-          error_detail: `Operator initiated safety halt at ${new Date(now).toLocaleTimeString()}. Reason: ${reason || 'No reason provided'}. Stage: ${currentStage}`,
+          error_detail: `Operator initiated safety halt. Reason: ${audit.reason}. Stage: ${audit.stage_when_halted}.`,
         };
       } else if (task.status === 'pending' || task.status === 'queued') {
-        // Mark pending/queued tasks as canceled
         return {
           ...task,
           status: 'canceled' as const,
           error_message: 'Halted by operator',
-          error_detail: `Scan halted before this task could run. Original halt reason: ${reason || 'No reason provided'}`,
+          error_detail: `Scan halted before this task could run. Reason: ${audit.reason}`,
         };
       }
       return task;
     }));
     
-    // Update scan status
     setScanStatus('canceled');
     setHaltDialogOpen(false);
-    
-    toast.success('Scan halted safely', {
-      description: `Stopped at: ${currentStage}`,
-    });
-  }, [getCurrentStage]);
+  }, [getCurrentStage, haltScanBackend, scanId]);
  
    // Simulate scan progress with timestamps
    useEffect(() => {
@@ -252,15 +247,16 @@ import { toast } from 'sonner';
                        <Pause className="w-3 h-3" />
                        PAUSE
                      </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
-                      className="gap-1.5 font-mono text-[10px] bg-severity-critical hover:bg-severity-critical/90"
-                      onClick={() => setHaltDialogOpen(true)}
-                    >
-                      <OctagonX className="w-3 h-3" />
-                      HALT (SAFETY)
-                     </Button>
+                     <Button 
+                       variant="destructive" 
+                       size="sm" 
+                       className="gap-1.5 font-mono text-[10px] bg-severity-critical hover:bg-severity-critical/90"
+                       onClick={() => setHaltDialogOpen(true)}
+                       disabled={isHalting}
+                     >
+                       <OctagonX className="w-3 h-3" />
+                       {isHalting ? 'HALTING…' : 'HALT (SAFETY)'}
+                      </Button>
                    </>
                  )}
                 {isQueuedForWindow && (

@@ -692,6 +692,21 @@ Deno.serve(async (req) => {
        max_rps: Math.min(safety_config.max_rps, gating.max_rps),
      };
  
+    // === HALT CHECK: verify scan hasn't been canceled before starting ===
+    const { data: currentRun } = await supabase
+      .from("scan_runs")
+      .select("status")
+      .eq("id", scan_run_id)
+      .single();
+
+    if (currentRun && ["canceled", "cancelled"].includes(currentRun.status)) {
+      console.log(`[SecurityWorker] Scan ${scan_run_id} was halted. Aborting.`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Scan halted by operator", findings: [], not_tested: [] }),
+        { headers: jsonHeaders }
+      );
+    }
+
     const findings: Finding[] = [];
     const notTested: NotTestedItem[] = [];
     
