@@ -403,9 +403,170 @@ export type Database = {
           },
         ]
       }
+      stripe_customers: {
+        Row: {
+          created_at: string
+          id: string
+          stripe_customer_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          stripe_customer_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          stripe_customer_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stripe_events: {
+        Row: {
+          event_type: string
+          id: string
+          processed_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          event_type: string
+          id?: string
+          processed_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          event_type?: string
+          id?: string
+          processed_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
+      stripe_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string
+          current_period_start: string
+          id: string
+          price_id: string
+          status: string
+          stripe_subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end: string
+          current_period_start: string
+          id?: string
+          price_id: string
+          status: string
+          stripe_subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string
+          current_period_start?: string
+          id?: string
+          price_id?: string
+          status?: string
+          stripe_subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_monthly: {
+        Row: {
+          created_at: string
+          id: string
+          period_start: string
+          scan_runs_created: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          period_start: string
+          scan_runs_created?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          period_start?: string
+          scan_runs_created?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      user_entitlements: {
+        Row: {
+          allow_soak: boolean | null
+          allow_stress: boolean | null
+          cancel_at_period_end: boolean | null
+          current_period_end: string | null
+          current_period_start: string | null
+          max_concurrency: number | null
+          price_id: string | null
+          priority_queue: boolean | null
+          retention_days: number | null
+          scan_limit_per_month: number | null
+          status: string | null
+          stripe_subscription_id: string | null
+          tier_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          allow_soak?: never
+          allow_stress?: never
+          cancel_at_period_end?: boolean | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          max_concurrency?: never
+          price_id?: string | null
+          priority_queue?: never
+          retention_days?: never
+          scan_limit_per_month?: never
+          status?: string | null
+          stripe_subscription_id?: string | null
+          tier_name?: never
+          user_id?: string | null
+        }
+        Update: {
+          allow_soak?: never
+          allow_stress?: never
+          cancel_at_period_end?: boolean | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          max_concurrency?: never
+          price_id?: string | null
+          priority_queue?: never
+          retention_days?: never
+          scan_limit_per_month?: never
+          status?: string | null
+          stripe_subscription_id?: string | null
+          tier_name?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
