@@ -17,9 +17,9 @@ export function SiteNav() {
 
   const handleAuthorizeScan = () => {
     if (user) {
-      navigate('/dashboard/targets/new');
+      navigate('/dashboard/targets');
     } else {
-      navigate('/auth', { state: { from: '/dashboard/targets/new' } });
+      navigate('/auth', { state: { from: '/dashboard/targets' } });
     }
   };
 
