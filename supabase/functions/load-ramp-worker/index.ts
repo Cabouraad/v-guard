@@ -666,11 +666,43 @@ Deno.serve(async (req) => {
       );
     }
 
+     // ============================================
+     // SERVER-SIDE ENTITLEMENT RE-CHECK
+     // Workers must verify gating before running
+     // ============================================
+     const { data: gatingCheck, error: gatingError } = await supabase
+       .rpc("can_run_gated_task", {
+         p_scan_run_id: input.scan_run_id,
+         p_task_type: "load_ramp_full", // Check for full ramp permissions
+       });
+ 
+     if (gatingError) {
+       console.error("Gating check error:", gatingError);
+       return new Response(
+         JSON.stringify({ success: false, error: "Failed to verify entitlements" }),
+         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     const gating = gatingCheck?.[0];
+     if (!gating) {
+       return new Response(
+         JSON.stringify({ success: false, error: "Scan run not found" }),
+         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     console.log(`[LOAD-RAMP] Gating check: tier=${gating.tier_name}, allowed=${gating.allowed}, reason=${gating.reason}`);
+ 
+     // Apply entitlement-enforced limits
+     const entitlementMaxConcurrency = gating.max_concurrency || 2;
+     const entitlementMaxRps = gating.max_rps || 10;
+ 
     // Enforce absolute safety limits
     const safeInput: WorkerInput = {
       ...input,
-      max_rps: Math.min(input.max_rps || 10, 50), // Absolute cap at 50 RPS
-      target_concurrency: Math.min(input.target_concurrency || 5, 20), // Absolute cap at 20 concurrent
+       max_rps: Math.min(input.max_rps || 10, entitlementMaxRps, 50), // Cap by entitlement AND absolute limit
+       target_concurrency: Math.min(input.target_concurrency || 5, entitlementMaxConcurrency, 20), // Cap by entitlement AND absolute limit
       environment_gating: input.environment_gating || {
         environment: "production",
         userApprovedProduction: false,
@@ -678,6 +710,13 @@ Deno.serve(async (req) => {
       },
       do_not_test_routes: input.do_not_test_routes || [],
     };
+ 
+     // If gating disallows and this is a full ramp, skip or limit
+     if (!gating.allowed && input.ramp_schedule && input.ramp_schedule.length > 3) {
+       console.log(`[LOAD-RAMP] Full ramp not allowed: ${gating.reason}. Limiting to light ramp.`);
+       // Limit to 3 steps max (light ramp)
+       safeInput.ramp_schedule = input.ramp_schedule.slice(0, 3);
+     }
 
     const result = await runLoadRamp(supabase, safeInput);
 

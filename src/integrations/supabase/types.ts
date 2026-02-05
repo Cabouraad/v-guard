@@ -569,7 +569,40 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      can_run_gated_task: {
+        Args: { p_scan_run_id: string; p_task_type: string }
+        Returns: {
+          allow_soak: boolean
+          allow_stress: boolean
+          allowed: boolean
+          max_concurrency: number
+          max_rps: number
+          reason: string
+          tier_name: string
+        }[]
+      }
+      get_monthly_usage: {
+        Args: { p_period_start: string; p_user_id: string }
+        Returns: number
+      }
+      get_user_entitlements: {
+        Args: { p_user_id: string }
+        Returns: {
+          allow_soak: boolean
+          allow_stress: boolean
+          current_period_end: string
+          max_concurrency: number
+          priority_queue: boolean
+          retention_days: number
+          scan_limit_per_month: number
+          subscription_status: string
+          tier_name: string
+        }[]
+      }
+      increment_scan_usage: {
+        Args: { p_limit: number; p_period_start: string; p_user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       confidence_level: "high" | "medium" | "low"

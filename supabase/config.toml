@@ -11,3 +11,6 @@ project_id = "vrireccyyykuszuyobri"
  
  [functions.check-subscription]
  verify_jwt = false
+ 
+ [functions.create-scan-run]
+ verify_jwt = false
