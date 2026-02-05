@@ -22,6 +22,12 @@
    unlock: (config: Omit<SafetyLockState, 'isLocked'>) => void;
    lock: () => void;
    getAuditString: () => string;
+   isPanelOpen: boolean;
+   openPanel: () => void;
+   closePanel: () => void;
+   isWhyLockedOpen: boolean;
+   openWhyLocked: () => void;
+   closeWhyLocked: () => void;
  }
  
  const defaultState: SafetyLockState = {
@@ -42,6 +48,8 @@
  
  export function SafetyLockProvider({ children }: { children: ReactNode }) {
    const [state, setState] = useState<SafetyLockState>(defaultState);
+   const [isPanelOpen, setIsPanelOpen] = useState(false);
+   const [isWhyLockedOpen, setIsWhyLockedOpen] = useState(false);
  
    const unlock = (config: Omit<SafetyLockState, 'isLocked'>) => {
      setState({
@@ -53,6 +61,11 @@
    const lock = () => {
      setState(defaultState);
    };
+ 
+   const openPanel = () => setIsPanelOpen(true);
+   const closePanel = () => setIsPanelOpen(false);
+   const openWhyLocked = () => setIsWhyLockedOpen(true);
+   const closeWhyLocked = () => setIsWhyLockedOpen(false);
  
    const getAuditString = (): string => {
      if (state.isLocked) {
@@ -67,7 +80,18 @@
    };
  
    return (
-     <SafetyLockContext.Provider value={{ state, unlock, lock, getAuditString }}>
+     <SafetyLockContext.Provider value={{ 
+       state, 
+       unlock, 
+       lock, 
+       getAuditString,
+       isPanelOpen,
+       openPanel,
+       closePanel,
+       isWhyLockedOpen,
+       openWhyLocked,
+       closeWhyLocked,
+     }}>
        {children}
      </SafetyLockContext.Provider>
    );

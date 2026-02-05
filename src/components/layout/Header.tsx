@@ -1,5 +1,4 @@
- import { useState } from 'react';
- import { Bell, User, LogOut } from 'lucide-react';
+ import { Bell, User, LogOut, Command } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,7 +9,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
  import { Avatar, AvatarFallback } from '@/components/ui/avatar';
- import { SafetyLockIndicator, SafetyLockPanel, WhyLockedPanel } from '@/components/safety';
+ import { SafetyLockIndicator, SafetyLockPanel, WhyLockedPanel, useSafetyLock } from '@/components/safety';
+ import { useCommandPalette } from '@/components/command';
 
 interface HeaderProps {
   title?: string;
@@ -18,9 +18,9 @@ interface HeaderProps {
 }
 
  export function Header({ title, subtitle }: HeaderProps) {
-   const [unlockPanelOpen, setUnlockPanelOpen] = useState(false);
-   const [whyLockedPanelOpen, setWhyLockedPanelOpen] = useState(false);
- 
+   const { isPanelOpen, openPanel, closePanel, isWhyLockedOpen, openWhyLocked, closeWhyLocked } = useSafetyLock();
+   const { openPalette } = useCommandPalette();
+   
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50 backdrop-blur-sm">
       <div>
@@ -29,10 +29,20 @@ interface HeaderProps {
       </div>
 
        <div className="flex items-center gap-4">
+         {/* Command Palette Trigger */}
+         <button
+           onClick={openPalette}
+           className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono text-muted-foreground bg-muted/50 border border-border rounded-sm hover:bg-muted hover:text-foreground transition-colors"
+         >
+           <Command className="w-3 h-3" />
+           <span className="hidden sm:inline">Command</span>
+           <kbd className="px-1.5 py-0.5 text-[10px] bg-background border border-border rounded-sm">/</kbd>
+         </button>
+ 
          {/* Safety Lock Indicator */}
          <SafetyLockIndicator 
-           onUnlockClick={() => setUnlockPanelOpen(true)}
-           onWhyLockedClick={() => setWhyLockedPanelOpen(true)}
+           onUnlockClick={openPanel}
+           onWhyLockedClick={openWhyLocked}
          />
  
          {/* Alerts */}
@@ -69,8 +79,8 @@ interface HeaderProps {
        </div>
  
        {/* Safety Lock Panels */}
-       <SafetyLockPanel open={unlockPanelOpen} onOpenChange={setUnlockPanelOpen} />
-       <WhyLockedPanel open={whyLockedPanelOpen} onOpenChange={setWhyLockedPanelOpen} />
+       <SafetyLockPanel open={isPanelOpen} onOpenChange={(open) => !open && closePanel()} />
+       <WhyLockedPanel open={isWhyLockedOpen} onOpenChange={(open) => !open && closeWhyLocked()} />
      </header>
   );
 }
