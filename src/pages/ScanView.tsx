@@ -1,13 +1,14 @@
- import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
  import { useParams, Link } from 'react-router-dom';
  import { Header } from '@/components/layout/Header';
  import { ScanProgressTimeline, createTimelineSteps, TimelineStep } from '@/components/scan/ScanProgressTimeline';
+import { HaltScanDialog } from '@/components/scan/HaltScanDialog';
  import { Button } from '@/components/ui/button';
  import { StatusBadge } from '@/components/ui/status-badge';
  import { ScoreRing } from '@/components/ui/score-ring';
  import { 
    Pause, 
-   Square, 
+  OctagonX, 
    RefreshCw,
    FileText,
    Clock,
@@ -16,6 +17,7 @@
  import type { ScanTask, ScanStatus } from '@/types/database';
  import { ScanSafetyBadge, useSafetyLock } from '@/components/safety';
  import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
  
  // Simulated scan tasks for demo with timestamps
  const createInitialTasks = (): ScanTask[] => {
@@ -40,6 +42,83 @@
    const [elapsedTime, setElapsedTime] = useState(0);
    const [scores, setScores] = useState({ security: 0, reliability: 0 });
    const { state: safetyState, getAuditString } = useSafetyLock();
+  const [haltDialogOpen, setHaltDialogOpen] = useState(false);
+  const [haltInfo, setHaltInfo] = useState<{
+    reason?: string;
+    haltedAt?: string;
+    haltedBy?: string;
+    stageWhenHalted?: string;
+  } | null>(null);
+
+  // Get current running stage
+  const getCurrentStage = useCallback(() => {
+    const runningTask = tasks.find(t => t.status === 'running');
+    if (runningTask) {
+      const stageMap: Record<string, string> = {
+        'fingerprint': 'Fingerprint',
+        'tls_check': 'Security Safe Checks',
+        'security_headers': 'Security Safe Checks',
+        'cors_check': 'Security Safe Checks',
+        'cookie_check': 'Security Safe Checks',
+        'exposure_check': 'Security Safe Checks',
+        'perf_baseline': 'Performance Baseline',
+        'load_ramp_light': 'Load Ramp',
+        'load_ramp_full': 'Load Ramp',
+        'soak_test': 'Soak Test',
+        'stress_test': 'Stress & Recovery',
+        'report_compile': 'Report Compile',
+      };
+      return stageMap[runningTask.task_type] || runningTask.task_type;
+    }
+    return 'Initializing';
+  }, [tasks]);
+
+  // Handle halt scan
+  const handleHaltScan = useCallback((reason: string) => {
+    const now = new Date().toISOString();
+    const currentStage = getCurrentStage();
+    
+    // Build audit log
+    const auditEntry = {
+      reason: reason || 'No reason provided',
+      haltedAt: now,
+      haltedBy: 'Operator (User)',
+      stageWhenHalted: currentStage,
+    };
+    
+    setHaltInfo(auditEntry);
+    
+    // Update all tasks
+    setTasks(prev => prev.map(task => {
+      if (task.status === 'running') {
+        // Mark running task as canceled with error detail
+        return {
+          ...task,
+          status: 'canceled' as const,
+          ended_at: now,
+          error_message: 'Halted by operator',
+          error_detail: `Operator initiated safety halt at ${new Date(now).toLocaleTimeString()}. Reason: ${reason || 'No reason provided'}. Stage: ${currentStage}`,
+        };
+      } else if (task.status === 'pending' || task.status === 'queued') {
+        // Mark pending/queued tasks as canceled
+        return {
+          ...task,
+          status: 'canceled' as const,
+          error_message: 'Halted by operator',
+          error_detail: `Scan halted before this task could run. Original halt reason: ${reason || 'No reason provided'}`,
+        };
+      }
+      return task;
+    }));
+    
+    // Update scan status
+    setScanStatus('canceled');
+    setHaltDialogOpen(false);
+    
+    toast.success('Scan halted safely', {
+      description: `Stopped at: ${currentStage}`,
+    });
+  }, [getCurrentStage]);
  
    // Simulate scan progress with timestamps
    useEffect(() => {
@@ -98,7 +177,7 @@
    };
  
    // Create timeline steps from tasks
-   const timelineSteps = createTimelineSteps(
+  const timelineSteps: TimelineStep[] = createTimelineSteps(
      tasks.map(t => ({
        id: t.id,
        task_type: t.task_type,
@@ -110,7 +189,19 @@
      })),
      safetyState.isLocked,
      safetyState.enabledModules
-   );
+  ).map(step => {
+    // Add halt info to canceled steps
+    if (haltInfo && (step.status === 'canceled' || (scanStatus === 'canceled' && step.status === 'pending'))) {
+      return {
+        ...step,
+        status: 'canceled' as const,
+        skippedReason: 'operator_halt' as const,
+        haltedBy: haltInfo.haltedBy,
+        haltedAt: haltInfo.haltedAt,
+      };
+    }
+    return step;
+  });
  
    return (
      <div className="min-h-screen bg-background flex flex-col">
@@ -148,12 +239,31 @@
                        <Pause className="w-3 h-3" />
                        PAUSE
                      </Button>
-                     <Button variant="destructive" size="sm" className="gap-1.5 font-mono text-[10px]">
-                       <Square className="w-3 h-3" />
-                       HALT
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      className="gap-1.5 font-mono text-[10px] bg-severity-critical hover:bg-severity-critical/90"
+                      onClick={() => setHaltDialogOpen(true)}
+                    >
+                      <OctagonX className="w-3 h-3" />
+                      HALT (SAFETY)
                      </Button>
                    </>
                  )}
+              {scanStatus === 'canceled' && haltInfo && (
+                <>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-severity-critical/10 border border-severity-critical/20 rounded-sm">
+                    <OctagonX className="w-3.5 h-3.5 text-severity-critical" />
+                    <span className="text-[10px] font-mono text-severity-critical">
+                      HALTED BY OPERATOR
+                    </span>
+                  </div>
+                  <Button variant="outline" size="sm" className="gap-1.5 font-mono text-[10px]">
+                    <RefreshCw className="w-3 h-3" />
+                    RESCAN
+                  </Button>
+                </>
+              )}
                  {scanStatus === 'completed' && (
                    <>
                      <Button variant="outline" size="sm" className="gap-1.5 font-mono text-[10px]">
@@ -222,6 +332,15 @@
          </div>
  
        </div>
+
+      {/* Halt Scan Dialog */}
+      <HaltScanDialog
+        open={haltDialogOpen}
+        onOpenChange={setHaltDialogOpen}
+        onConfirm={handleHaltScan}
+        currentStage={getCurrentStage()}
+        scanId={scanId || 'demo'}
+      />
      </div>
    );
  }
