@@ -1,161 +1,134 @@
- import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
- import Stripe from "stripe";
- import { createClient } from "@supabase/supabase-js";
- 
- const corsHeaders = {
-   "Access-Control-Allow-Origin": "*",
-   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
- };
- 
- // Price IDs to tier mapping
- const PRICE_TO_TIER: Record<string, string> = {
-   "price_1SxHva1B5M2OuX4nze4AU7Up": "standard",
-   "price_1SxHvm1B5M2OuX4nxghY7dP7": "production",
- };
- 
- const logStep = (step: string, details?: unknown) => {
-   const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
-   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
- };
- 
- serve(async (req) => {
-   if (req.method === "OPTIONS") {
-     return new Response(null, { headers: corsHeaders });
-   }
- 
-   try {
-     logStep("Function started");
- 
-     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
-     logStep("Stripe key verified");
- 
-     const supabaseClient = createClient(
-       Deno.env.get("SUPABASE_URL") ?? "",
-       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-       { auth: { persistSession: false } }
-     );
- 
-     const authHeader = req.headers.get("Authorization");
-     if (!authHeader) throw new Error("No authorization header provided");
- 
-     const token = authHeader.replace("Bearer ", "");
-     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-     if (userError) throw new Error(`Authentication error: ${userError.message}`);
-     
-     const user = userData.user;
-     if (!user?.email) throw new Error("User not authenticated or email not available");
-     logStep("User authenticated", { userId: user.id, email: user.email });
- 
-     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
- 
-     // Find customer
-     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-     if (customers.data.length === 0) {
-       logStep("No customer found");
-       return new Response(JSON.stringify({ 
-         subscribed: false,
-         tier: null,
-         subscription_end: null,
-         scan_limit: 0,
-         allow_soak: false,
-         allow_stress: false,
-         priority_queue: false,
-         retention_days: 7,
-         max_concurrency: 1,
-       }), {
-         headers: { ...corsHeaders, "Content-Type": "application/json" },
-         status: 200,
-       });
-     }
- 
-     const customerId = customers.data[0].id;
-     logStep("Found Stripe customer", { customerId });
- 
-     // Get active subscriptions
-     const subscriptions = await stripe.subscriptions.list({
-       customer: customerId,
-       status: "active",
-       limit: 1,
-     });
- 
-     if (subscriptions.data.length === 0) {
-       logStep("No active subscription found");
-       return new Response(JSON.stringify({ 
-         subscribed: false,
-         tier: null,
-         subscription_end: null,
-         scan_limit: 0,
-         allow_soak: false,
-         allow_stress: false,
-         priority_queue: false,
-         retention_days: 7,
-         max_concurrency: 1,
-       }), {
-         headers: { ...corsHeaders, "Content-Type": "application/json" },
-         status: 200,
-       });
-     }
- 
-     const subscription = subscriptions.data[0] as unknown as {
-       id: string;
-       current_period_end: number;
-       cancel_at_period_end: boolean;
-       items: { data: Array<{ price: { id: string } }> };
-     };
-     const priceId = subscription.items.data[0].price.id;
-     const tier = PRICE_TO_TIER[priceId] || "unknown";
-     const subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
- 
-     logStep("Active subscription found", { 
-       subscriptionId: subscription.id, 
-       tier, 
-       priceId,
-       endDate: subscriptionEnd 
-     });
- 
-// Get current period start for usage tracking
-const periodStart = new Date(subscription.current_period_end * 1000);
-periodStart.setMonth(periodStart.getMonth() - 1);
-const periodStartStr = periodStart.toISOString().split("T")[0];
+import { createClient } from "@supabase/supabase-js";
 
-// Get monthly usage
-const { data: usageData } = await supabaseClient.rpc("get_monthly_usage", {
-  p_user_id: user.id,
-  p_period_start: periodStartStr,
-});
-const scansUsed = usageData ?? 0;
-
-// Calculate entitlements based on tier
-     const isProduction = tier === "production";
-const scanLimit = isProduction ? 15 : 5;
-const entitlements = {
-  subscribed: true,
-  tier,
-  price_id: priceId,
-  subscription_end: subscriptionEnd,
-  cancel_at_period_end: subscription.cancel_at_period_end,
-  scan_limit: scanLimit,
-  scans_used: scansUsed,
-  scans_remaining: Math.max(0, scanLimit - scansUsed),
-  period_reset_date: subscriptionEnd,
-  allow_soak: isProduction,
-  allow_stress: isProduction,
-  priority_queue: isProduction,
-  retention_days: isProduction ? 180 : 30,
-  max_concurrency: isProduction ? 5 : 2,
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
- 
-     return new Response(JSON.stringify(entitlements), {
-       headers: { ...corsHeaders, "Content-Type": "application/json" },
-       status: 200,
-     });
-   } catch (error) {
-     const errorMessage = error instanceof Error ? error.message : String(error);
-     logStep("ERROR", { message: errorMessage });
-     return new Response(JSON.stringify({ error: errorMessage }), {
-       headers: { ...corsHeaders, "Content-Type": "application/json" },
-       status: 500,
-     });
-   }
- });
+
+const logStep = (step: string, details?: unknown) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : "";
+  console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
+};
+
+// Default response for users with no active subscription
+const NO_SUBSCRIPTION = {
+  subscribed: false,
+  tier: null,
+  price_id: null,
+  subscription_end: null,
+  cancel_at_period_end: false,
+  scan_limit: 0,
+  scans_used: 0,
+  scans_remaining: 0,
+  period_reset_date: null,
+  allow_soak: false,
+  allow_stress: false,
+  priority_queue: false,
+  retention_days: 7,
+  max_concurrency: 1,
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    logStep("Function started");
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false },
+    });
+
+    // Authenticate user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+
+    const user = userData.user;
+    if (!user) throw new Error("User not authenticated");
+    logStep("User authenticated", { userId: user.id });
+
+    // ── Read entitlements from DB (no Stripe API call) ──────────────
+    const { data: entitlements, error: entError } = await supabase
+      .rpc("get_user_entitlements", { p_user_id: user.id });
+
+    if (entError) {
+      logStep("Entitlements query error", { message: entError.message });
+      throw new Error(`Failed to read entitlements: ${entError.message}`);
+    }
+
+    // No active subscription found in DB
+    if (!entitlements || entitlements.length === 0) {
+      logStep("No active subscription in database");
+      return new Response(JSON.stringify(NO_SUBSCRIPTION), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    const ent = entitlements[0];
+    logStep("Entitlements loaded from DB", {
+      tier: ent.tier_name,
+      status: ent.subscription_status,
+      scanLimit: ent.scan_limit_per_month,
+    });
+
+    // ── Read monthly usage from DB ──────────────────────────────────
+    const periodEnd = new Date(ent.current_period_end);
+    const periodStart = new Date(periodEnd);
+    periodStart.setMonth(periodStart.getMonth() - 1);
+    const periodStartStr = periodStart.toISOString().split("T")[0];
+
+    const { data: usageData } = await supabase.rpc("get_monthly_usage", {
+      p_user_id: user.id,
+      p_period_start: periodStartStr,
+    });
+    const scansUsed = usageData ?? 0;
+
+    const scanLimit = ent.scan_limit_per_month;
+    const subscriptionEnd = new Date(ent.current_period_end).toISOString();
+
+    const response = {
+      subscribed: true,
+      tier: ent.tier_name,
+      price_id: null, // Not exposed to client; tier name is sufficient
+      subscription_end: subscriptionEnd,
+      cancel_at_period_end: false, // TODO: expose from get_user_entitlements if needed
+      scan_limit: scanLimit,
+      scans_used: scansUsed,
+      scans_remaining: Math.max(0, scanLimit - scansUsed),
+      period_reset_date: subscriptionEnd,
+      allow_soak: ent.allow_soak,
+      allow_stress: ent.allow_stress,
+      priority_queue: ent.priority_queue,
+      retention_days: ent.retention_days,
+      max_concurrency: ent.max_concurrency,
+    };
+
+    logStep("Returning DB-driven entitlements", {
+      tier: response.tier,
+      scansUsed,
+      scansRemaining: response.scans_remaining,
+    });
+
+    return new Response(JSON.stringify(response), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logStep("ERROR", { message: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+    });
+  }
+});
