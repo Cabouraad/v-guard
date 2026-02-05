@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth";
+import { LegacyRedirect } from "@/components/routing/LegacyRedirect";
 import Landing from "@/pages/Landing";
 import Safety from "@/pages/Safety";
 import Pricing from "@/pages/Pricing";
@@ -77,11 +78,12 @@ const App = () => (
                     <Route path="/projects" element={<Navigate to="/dashboard/targets" replace />} />
                     <Route path="/projects/new" element={<Navigate to="/dashboard/targets/new" replace />} />
                     <Route path="/scan-log" element={<Navigate to="/dashboard/scan-log" replace />} />
-                    <Route path="/scan-log/:scanRunId" element={<Navigate to="/dashboard/scan-log/:scanRunId" replace />} />
+                    <Route path="/scan-log/:scanRunId" element={<LegacyRedirect to="/dashboard/scan-log/:scanRunId" />} />
                     <Route path="/evidence" element={<Navigate to="/dashboard/evidence" replace />} />
+                    <Route path="/evidence/:scanRunId" element={<LegacyRedirect to="/dashboard/evidence/:scanRunId" />} />
                     <Route path="/config" element={<Navigate to="/dashboard/config" replace />} />
-                    <Route path="/scans/:scanId" element={<Navigate to="/dashboard/scans/:scanId" replace />} />
-                    <Route path="/reports/:reportId" element={<Navigate to="/dashboard/reports/:reportId" replace />} />
+                    <Route path="/scans/:scanId" element={<LegacyRedirect to="/dashboard/scans/:scanId" />} />
+                    <Route path="/reports/:reportId" element={<LegacyRedirect to="/dashboard/reports/:reportId" />} />
                     
                     <Route path="*" element={<NotFound />} />
                   </Routes>
