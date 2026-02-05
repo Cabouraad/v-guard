@@ -63,42 +63,42 @@ export default function Projects() {
   return (
     <div className="min-h-screen bg-background">
       <Header 
-        title="Projects" 
-        subtitle="Manage your security-monitored applications"
+        title="Targets" 
+        subtitle="Authorized scan targets and their current status"
       />
 
       <div className="p-6">
         {/* Action Bar */}
         <div className="flex items-center justify-between mb-6">
-          <p className="text-muted-foreground">
-            {projects.length} projects configured
+          <p className="text-xs font-mono text-muted-foreground">
+            {projects.length} TARGETS REGISTERED
           </p>
           <Link to="/projects/new">
-            <Button className="gap-2">
+            <Button className="gap-2 font-mono text-xs">
               <Plus className="w-4 h-4" />
-              New Project
+              AUTHORIZE TARGET
             </Button>
           </Link>
         </div>
 
-        {/* Projects Grid */}
+        {/* Targets Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map((project) => (
             <Card 
               key={project.id}
-              className="group hover:shadow-lg transition-all duration-200 hover:border-primary/30"
+              className="group hover:shadow-lg transition-all duration-200 hover:border-primary/30 rounded-sm"
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-sm bg-primary/10">
                       <Globe className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-base">{project.name}</CardTitle>
+                      <CardTitle className="text-sm font-mono">{project.name}</CardTitle>
                       <Badge 
                         variant="outline" 
-                        className={`text-[10px] mt-1 ${environmentColors[project.environment]}`}
+                        className={`text-[10px] font-mono mt-1 ${environmentColors[project.environment]}`}
                       >
                         {project.environment}
                       </Badge>
@@ -112,17 +112,17 @@ export default function Projects() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem className="font-mono text-xs">
                         <Play className="w-4 h-4 mr-2" />
-                        Run Scan
+                        Queue Scan
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem className="font-mono text-xs">
                         <ExternalLink className="w-4 h-4 mr-2" />
-                        Open URL
+                        View Target
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem className="text-destructive font-mono text-xs">
                         <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
+                        Remove
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -130,20 +130,20 @@ export default function Projects() {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs font-mono text-muted-foreground">
                   <ExternalLink className="w-3.5 h-3.5" />
                   <span className="truncate">{project.baseUrl}</span>
                 </div>
 
                 <div className="flex items-center justify-between pt-3 border-t border-border">
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 font-mono">
                       <Calendar className="w-3.5 h-3.5" />
                       {project.lastScanAt}
                     </span>
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 font-mono">
                       <Activity className="w-3.5 h-3.5" />
-                      {project.totalScans} scans
+                      {project.totalScans} runs
                     </span>
                   </div>
 
@@ -161,14 +161,14 @@ export default function Projects() {
             </Card>
           ))}
 
-          {/* Add New Project Card */}
+          {/* Add New Target Card */}
           <Link to="/projects/new">
-            <Card className="h-full min-h-[200px] border-dashed hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer flex items-center justify-center">
+            <Card className="h-full min-h-[200px] border-dashed rounded-sm hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer flex items-center justify-center">
               <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-sm bg-muted flex items-center justify-center mx-auto mb-3">
                   <Plus className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <p className="font-medium text-muted-foreground">Add New Project</p>
+                <p className="font-mono text-xs text-muted-foreground">AUTHORIZE NEW TARGET</p>
               </div>
             </Card>
           </Link>

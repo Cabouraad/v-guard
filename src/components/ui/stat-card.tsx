@@ -42,14 +42,14 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "flex items-start gap-4 p-5 rounded-xl border bg-card transition-all hover:shadow-lg",
+        "flex items-start gap-4 p-5 rounded-sm border bg-card transition-all hover:shadow-lg",
         variantStyles[variant],
         className
       )}
     >
       {Icon && (
         <div className={cn(
-          "flex items-center justify-center w-12 h-12 rounded-lg",
+          "flex items-center justify-center w-12 h-12 rounded-sm",
           iconStyles[variant]
         )}>
           <Icon className="w-6 h-6" />
@@ -57,12 +57,12 @@ export function StatCard({
       )}
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-muted-foreground font-medium">{title}</p>
+        <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">{title}</p>
         <div className="flex items-baseline gap-2 mt-1">
-          <span className="text-2xl font-bold text-foreground">{value}</span>
+          <span className="text-2xl font-mono font-bold text-foreground">{value}</span>
           {trend && (
             <span className={cn(
-              "text-xs font-medium",
+              "text-xs font-mono",
               trend.isPositive ? "text-status-success" : "text-severity-critical"
             )}>
               {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
@@ -70,7 +70,7 @@ export function StatCard({
           )}
         </div>
         {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+          <p className="text-[10px] font-mono text-muted-foreground mt-1">{subtitle}</p>
         )}
       </div>
     </div>

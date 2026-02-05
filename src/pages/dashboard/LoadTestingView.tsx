@@ -34,7 +34,7 @@
        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
          <div className="flex items-center gap-4">
            <Gauge className="w-5 h-5 text-primary" />
-           <h1 className="font-mono text-lg text-foreground tracking-tight">LOAD ANALYSIS</h1>
+          <h1 className="font-mono text-lg text-foreground tracking-tight">LOAD PROBE</h1>
          </div>
          <div className="flex items-center gap-2">
            <Button
@@ -46,12 +46,12 @@
              {isRunning ? (
                <>
                  <Square className="w-3 h-3" />
-                 ABORT
+                HALT
                </>
              ) : (
                <>
                  <Play className="w-3 h-3" />
-                 RUN TEST
+                EXECUTE
                </>
              )}
            </Button>
@@ -119,15 +119,15 @@
            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-border">
              <div className="flex items-center gap-2">
                <span className="w-3 h-0.5 bg-primary" />
-               <span className="text-xs font-mono text-muted-foreground">RPS</span>
+              <span className="text-xs font-mono text-muted-foreground">THROUGHPUT</span>
              </div>
              <div className="flex items-center gap-2">
                <span className="w-3 h-0.5 bg-severity-medium" style={{ borderStyle: 'dashed' }} />
-               <span className="text-xs font-mono text-muted-foreground">P95 Latency</span>
+              <span className="text-xs font-mono text-muted-foreground">LATENCY P95</span>
              </div>
              <div className="flex items-center gap-2">
                <span className="w-3 h-3 bg-severity-critical/30 border border-severity-critical/50" />
-               <span className="text-xs font-mono text-muted-foreground">Error Zone</span>
+              <span className="text-xs font-mono text-muted-foreground">FAILURE ZONE</span>
              </div>
            </div>
          </div>
@@ -135,10 +135,10 @@
          {/* Right panel - gauges */}
          <div className="w-64 border-l border-border p-6 flex flex-col gap-8">
            <div className="text-xs font-mono text-muted-foreground uppercase tracking-wider mb-2">
-             Current State
+            LIVE STATE
            </div>
            <InstrumentGauge
-             label="Throughput"
+            label="RPS"
              value={156}
              unit="rps"
              max={300}
@@ -146,7 +146,7 @@
              criticalThreshold={250}
            />
            <InstrumentGauge
-             label="Latency P95"
+            label="P95"
              value={187}
              unit="ms"
              max={500}
@@ -154,7 +154,7 @@
              criticalThreshold={350}
            />
            <InstrumentGauge
-             label="Error Rate"
+            label="ERRORS"
              value={2}
              unit="%"
              max={50}

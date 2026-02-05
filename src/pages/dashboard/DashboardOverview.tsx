@@ -20,11 +20,11 @@
          <div className="flex items-center gap-4">
            <h1 className="font-mono text-lg text-foreground tracking-tight">RISK CONTROL</h1>
            <span className="text-xs font-mono text-muted-foreground">|</span>
-           <span className="text-xs font-mono text-muted-foreground">3 projects monitored</span>
+          <span className="text-xs font-mono text-muted-foreground">3 TARGETS ACTIVE</span>
          </div>
          <div className="flex items-center gap-2">
            <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
-           <span className="text-xs font-mono text-muted-foreground">System nominal</span>
+          <span className="text-xs font-mono text-muted-foreground">SYSTEM NOMINAL</span>
          </div>
        </header>
  
@@ -54,7 +54,7 @@
                  size="md"
                />
                <InstrumentGauge
-                 label="P95 Latency"
+                label="P95"
                  value={245}
                  unit="ms"
                  max={1000}
@@ -63,7 +63,7 @@
                  size="md"
                />
                <InstrumentGauge
-                 label="Error Rate"
+                label="Errors"
                  value={2.4}
                  unit="%"
                  max={100}
@@ -76,15 +76,15 @@
                <div className="flex-1 flex items-center justify-end gap-6">
                  <div className="text-right">
                    <div className="text-2xl font-mono font-bold text-foreground">12</div>
-                   <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Total Scans</div>
+                  <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">RUNS</div>
                  </div>
                  <div className="text-right">
                    <div className="text-2xl font-mono font-bold text-severity-critical">1</div>
-                   <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">Critical</div>
+                  <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">CRITICAL</div>
                  </div>
                  <div className="text-right">
                    <div className="text-2xl font-mono font-bold text-severity-high">4</div>
-                   <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">High</div>
+                  <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider">HIGH</div>
                  </div>
                </div>
              </div>
@@ -94,7 +94,7 @@
            <section className="px-6 py-2 border-b border-border">
              <div className="flex items-center gap-3 mb-2">
                <Clock className="w-4 h-4 text-muted-foreground" />
-               <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">Scan History</span>
+              <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">SCAN LOG</span>
              </div>
              <RiskTimeline 
                selectedScanId={selectedScanId}

@@ -62,7 +62,7 @@ export default function NewProject() {
     e.preventDefault();
     
     if (!formData.name || !formData.baseUrl) {
-      toast.error('Please fill in required fields');
+      toast.error('Required fields missing: Target identifier and URL required to authorize scan.');
       return;
     }
 
@@ -70,19 +70,19 @@ export default function NewProject() {
     try {
       new URL(formData.baseUrl);
     } catch {
-      toast.error('Please enter a valid URL');
+      toast.error('Invalid target URL: Must be a valid HTTP/HTTPS endpoint.');
       return;
     }
 
-    toast.success('Project created! Starting scan...');
+    toast.success('Target authorized. Scan queued for execution.');
     navigate('/scans/demo');
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header 
-        title="New Project" 
-        subtitle="Configure your security scan"
+        title="Authorize Target" 
+        subtitle="Configure scan parameters and safety constraints"
       />
 
       <div className="max-w-4xl mx-auto p-6">
@@ -92,25 +92,25 @@ export default function NewProject() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="w-5 h-5 text-primary" />
-                Target Application
+                Target Definition
               </CardTitle>
               <CardDescription>
-                Enter the URL of the application you want to scan
+                Specify target endpoint and operating environment
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Project Name *</Label>
+                  <Label htmlFor="name">Target Identifier *</Label>
                   <Input
                     id="name"
-                    placeholder="my-awesome-app"
+                    placeholder="api-gateway-prod"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="environment">Environment *</Label>
+                  <Label htmlFor="environment">Environment Class *</Label>
                   <Select
                     value={formData.environment}
                     onValueChange={(val: EnvironmentType) => 
@@ -124,19 +124,19 @@ export default function NewProject() {
                       <SelectItem value="production">
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-severity-critical" />
-                          Production
+                          PROD (restricted)
                         </div>
                       </SelectItem>
                       <SelectItem value="staging">
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-severity-medium" />
-                          Staging
+                          STAGING
                         </div>
                       </SelectItem>
                       <SelectItem value="development">
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-status-success" />
-                          Development
+                          DEV (full access)
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -145,7 +145,7 @@ export default function NewProject() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="baseUrl">Base URL *</Label>
+                <Label htmlFor="baseUrl">Target Endpoint *</Label>
                 <Input
                   id="baseUrl"
                   type="url"
@@ -154,21 +154,21 @@ export default function NewProject() {
                   onChange={(e) => setFormData(prev => ({ ...prev, baseUrl: e.target.value }))}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Works with any public URL: Lovable, Vercel, Netlify, Replit, etc.
+                  Accepts any publicly accessible HTTP/HTTPS endpoint.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Scan Mode */}
+          {/* Analysis Mode */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-primary" />
-                Scan Mode
+                Analysis Mode
               </CardTitle>
               <CardDescription>
-                Choose how deep the scanner should analyze your application
+                Select probe depth and access level
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -176,21 +176,21 @@ export default function NewProject() {
                 {[
                   {
                     mode: 'url_only' as ScanMode,
-                    title: 'URL Only',
-                    description: 'Black-box scan for any public app. Safest mode.',
+                    title: 'Passive',
+                    description: 'Read-only external probe. No authentication required.',
                     icon: Globe,
                     recommended: true,
                   },
                   {
                     mode: 'authenticated' as ScanMode,
                     title: 'Authenticated',
-                    description: 'Deeper analysis with test credentials.',
+                    description: 'Session-aware analysis. Requires test credentials.',
                     icon: Lock,
                   },
                   {
                     mode: 'hybrid' as ScanMode,
-                    title: 'Hybrid',
-                    description: 'Full analysis with repo access (coming soon).',
+                    title: 'Full Access',
+                    description: 'Source + runtime analysis. Pending implementation.',
                     icon: Server,
                     disabled: true,
                   },
@@ -204,7 +204,7 @@ export default function NewProject() {
                       scanMode: option.mode,
                       enableAuth: option.mode === 'authenticated'
                     }))}
-                    className={`relative p-4 rounded-lg border-2 text-left transition-all ${
+                    className={`relative p-4 rounded-sm border-2 text-left transition-all ${
                       option.disabled 
                         ? 'opacity-50 cursor-not-allowed border-border'
                         : formData.scanMode === option.mode
@@ -213,8 +213,8 @@ export default function NewProject() {
                     }`}
                   >
                     {option.recommended && (
-                      <Badge className="absolute -top-2 -right-2 bg-primary">
-                        Recommended
+                      <Badge className="absolute -top-2 -right-2 bg-primary font-mono text-[10px]">
+                        DEFAULT
                       </Badge>
                     )}
                     <option.icon className={`w-8 h-8 mb-3 ${
@@ -222,7 +222,7 @@ export default function NewProject() {
                         ? 'text-primary' 
                         : 'text-muted-foreground'
                     }`} />
-                    <h4 className="font-semibold">{option.title}</h4>
+                    <h4 className="font-mono text-sm">{option.title}</h4>
                     <p className="text-sm text-muted-foreground mt-1">
                       {option.description}
                     </p>
@@ -232,24 +232,24 @@ export default function NewProject() {
             </CardContent>
           </Card>
 
-          {/* Safety Guardrails */}
+          {/* Operational Constraints */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-severity-medium" />
-                Safety Guardrails
+                Safety Constraints
               </CardTitle>
               <CardDescription>
-                Configure rate limits and excluded routes for safe scanning
+                Define rate limits and exclusion zones
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>Max Requests Per Second</Label>
+                    <Label className="font-mono text-xs">MAX_RPS</Label>
                     <p className="text-xs text-muted-foreground">
-                      Higher values may trigger rate limiting on your target
+                      Rate ceiling. Automatic backoff if target degrades.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -262,7 +262,7 @@ export default function NewProject() {
                         ...prev, 
                         maxRps: parseInt(e.target.value) || 10 
                       }))}
-                      className="w-20 text-center"
+                      className="w-20 text-center font-mono"
                     />
                     <span className="text-sm text-muted-foreground">RPS</span>
                   </div>
@@ -271,9 +271,9 @@ export default function NewProject() {
                 <Separator />
 
                 <div className="space-y-3">
-                  <Label>Do Not Test Routes</Label>
+                  <Label className="font-mono text-xs">DO_NOT_TEST</Label>
                   <p className="text-xs text-muted-foreground">
-                    Add routes that should never be tested (e.g., /api/billing, /admin/delete)
+                    Excluded endpoints. Scanner will never probe these paths.
                   </p>
                   
                   <div className="flex gap-2">
@@ -282,8 +282,9 @@ export default function NewProject() {
                       value={newRoute}
                       onChange={(e) => setNewRoute(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addDoNotTestRoute())}
+                      className="font-mono text-xs"
                     />
-                    <Button type="button" variant="outline" onClick={addDoNotTestRoute}>
+                    <Button type="button" variant="outline" size="sm" onClick={addDoNotTestRoute}>
                       <Plus className="w-4 h-4" />
                     </Button>
                   </div>
@@ -311,17 +312,17 @@ export default function NewProject() {
                 </div>
               </div>
 
-              {/* Production Warning */}
+              {/* Production Constraint Notice */}
               {formData.environment === 'production' && (
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-severity-medium/10 border border-severity-medium/30">
+                <div className="flex items-start gap-3 p-4 rounded-sm bg-severity-medium/10 border border-severity-medium/30">
                   <Info className="w-5 h-5 text-severity-medium mt-0.5" />
                   <div>
-                    <p className="font-medium text-sm text-severity-medium">
-                      Production Environment Detected
+                    <p className="font-mono text-xs text-severity-medium">
+                      PROD ENVIRONMENT — RESTRICTED MODE
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Scans will use read-only checks and light load testing only. 
-                      Switch to Staging for full stress/soak tests.
+                      Analysis limited to passive probes and light load ramp (max 5 RPS, 3 concurrent). 
+                      Soak and stress tests require STAGING or explicit authorization.
                     </p>
                   </div>
                 </div>
@@ -329,22 +330,22 @@ export default function NewProject() {
             </CardContent>
           </Card>
 
-          {/* Optional: API & GraphQL */}
+          {/* API Endpoints */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-primary" />
-                API Configuration
-                <Badge variant="outline">Optional</Badge>
+                API Endpoints
+                <Badge variant="outline" className="font-mono text-[10px]">OPTIONAL</Badge>
               </CardTitle>
               <CardDescription>
-                Provide additional endpoints for deeper API analysis
+                Specify API paths for targeted endpoint analysis
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="apiBasePath">API Base Path</Label>
+                  <Label htmlFor="apiBasePath" className="font-mono text-xs">API_BASE</Label>
                   <Input
                     id="apiBasePath"
                     placeholder="/api/v1"
@@ -353,10 +354,11 @@ export default function NewProject() {
                       ...prev, 
                       apiBasePath: e.target.value 
                     }))}
+                    className="font-mono text-xs"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="graphqlEndpoint">GraphQL Endpoint</Label>
+                  <Label htmlFor="graphqlEndpoint" className="font-mono text-xs">GRAPHQL_ENDPOINT</Label>
                   <Input
                     id="graphqlEndpoint"
                     placeholder="/graphql"
@@ -365,20 +367,21 @@ export default function NewProject() {
                       ...prev, 
                       graphqlEndpoint: e.target.value 
                     }))}
+                    className="font-mono text-xs"
                   />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Submit */}
+          {/* Actions */}
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate(-1)}>
-              Cancel
+            <Button type="button" variant="outline" onClick={() => navigate(-1)} className="font-mono text-xs">
+              ABORT
             </Button>
-            <Button type="submit" className="gap-2">
+            <Button type="submit" className="gap-2 font-mono text-xs">
               <Shield className="w-4 h-4" />
-              Create Project & Start Scan
+              AUTHORIZE & QUEUE SCAN
             </Button>
           </div>
         </form>
