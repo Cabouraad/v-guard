@@ -4,9 +4,7 @@ import { Header } from '@/components/layout/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -18,7 +16,8 @@ import {
   X,
   Info,
   Lock,
-  Server
+  Server,
+  ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { EnvironmentType, ScanMode } from '@/types/database';
@@ -85,112 +84,114 @@ export default function NewProject() {
         subtitle="Configure scan parameters and safety constraints"
       />
 
-      <div className="max-w-4xl mx-auto p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5 text-primary" />
-                Target Definition
-              </CardTitle>
-              <CardDescription>
-                Specify target endpoint and operating environment
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit} className="h-[calc(100vh-80px)] flex">
+        {/* Left Panel - Main Configuration */}
+        <div className="flex-1 overflow-auto border-r border-border">
+          <div className="p-6 space-y-8">
+            {/* Section: Target Definition */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Globe className="w-4 h-4 text-primary" />
+                <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                  TARGET DEFINITION
+                </h2>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 space-y-2">
+                    <Label htmlFor="name" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      IDENTIFIER *
+                    </Label>
+                    <Input
+                      id="name"
+                      placeholder="api-gateway-prod"
+                      value={formData.name}
+                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="environment" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                      ENV CLASS *
+                    </Label>
+                    <Select
+                      value={formData.environment}
+                      onValueChange={(val: EnvironmentType) => 
+                        setFormData(prev => ({ ...prev, environment: val }))
+                      }
+                    >
+                      <SelectTrigger className="font-mono text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="production">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-sm bg-severity-critical" />
+                            <span className="font-mono text-xs">PROD</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="staging">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-sm bg-severity-medium" />
+                            <span className="font-mono text-xs">STAGING</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="development">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-sm bg-status-success" />
+                            <span className="font-mono text-xs">DEV</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="name">Target Identifier *</Label>
+                  <Label htmlFor="baseUrl" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    ENDPOINT *
+                  </Label>
                   <Input
-                    id="name"
-                    placeholder="api-gateway-prod"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    id="baseUrl"
+                    type="url"
+                    placeholder="https://your-app.lovable.app"
+                    value={formData.baseUrl}
+                    onChange={(e) => setFormData(prev => ({ ...prev, baseUrl: e.target.value }))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="environment">Environment Class *</Label>
-                  <Select
-                    value={formData.environment}
-                    onValueChange={(val: EnvironmentType) => 
-                      setFormData(prev => ({ ...prev, environment: val }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="production">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-severity-critical" />
-                          PROD (restricted)
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="staging">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-severity-medium" />
-                          STAGING
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="development">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-status-success" />
-                          DEV (full access)
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
+            </section>
 
-              <div className="space-y-2">
-                <Label htmlFor="baseUrl">Target Endpoint *</Label>
-                <Input
-                  id="baseUrl"
-                  type="url"
-                  placeholder="https://your-app.lovable.app"
-                  value={formData.baseUrl}
-                  onChange={(e) => setFormData(prev => ({ ...prev, baseUrl: e.target.value }))}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Accepts any publicly accessible HTTP/HTTPS endpoint.
-                </p>
+            <Separator />
+
+            {/* Section: Analysis Mode */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-4 h-4 text-primary" />
+                <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                  ANALYSIS MODE
+                </h2>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Analysis Mode */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-primary" />
-                Analysis Mode
-              </CardTitle>
-              <CardDescription>
-                Select probe depth and access level
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
                   {
                     mode: 'url_only' as ScanMode,
                     title: 'Passive',
-                    description: 'Read-only external probe. No authentication required.',
+                    description: 'Read-only external probe',
                     icon: Globe,
                     recommended: true,
                   },
                   {
                     mode: 'authenticated' as ScanMode,
                     title: 'Authenticated',
-                    description: 'Session-aware analysis. Requires test credentials.',
+                    description: 'Session-aware analysis',
                     icon: Lock,
                   },
                   {
                     mode: 'hybrid' as ScanMode,
                     title: 'Full Access',
-                    description: 'Source + runtime analysis. Pending implementation.',
+                    description: 'Source + runtime (pending)',
                     icon: Server,
                     disabled: true,
                   },
@@ -204,52 +205,50 @@ export default function NewProject() {
                       scanMode: option.mode,
                       enableAuth: option.mode === 'authenticated'
                     }))}
-                    className={`relative p-4 rounded-sm border-2 text-left transition-all ${
+                    className={`relative p-4 border text-left transition-all ${
                       option.disabled 
                         ? 'opacity-50 cursor-not-allowed border-border'
                         : formData.scanMode === option.mode
-                          ? 'border-primary bg-primary/5'
+                          ? 'border-primary bg-primary/10'
                           : 'border-border hover:border-primary/50'
                     }`}
                   >
                     {option.recommended && (
-                      <Badge className="absolute -top-2 -right-2 bg-primary font-mono text-[10px]">
+                      <Badge className="absolute -top-2 -right-2 bg-primary text-primary-foreground">
                         DEFAULT
                       </Badge>
                     )}
-                    <option.icon className={`w-8 h-8 mb-3 ${
+                    <option.icon className={`w-5 h-5 mb-2 ${
                       formData.scanMode === option.mode 
                         ? 'text-primary' 
                         : 'text-muted-foreground'
                     }`} />
-                    <h4 className="font-mono text-sm">{option.title}</h4>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <h4 className="font-mono text-xs uppercase tracking-wider">{option.title}</h4>
+                    <p className="text-[10px] text-muted-foreground mt-1">
                       {option.description}
                     </p>
                   </button>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </section>
 
-          {/* Operational Constraints */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-severity-medium" />
-                Safety Constraints
-              </CardTitle>
-              <CardDescription>
-                Define rate limits and exclusion zones
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+            <Separator />
+
+            {/* Section: Safety Constraints */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-4 h-4 text-severity-medium" />
+                <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                  SAFETY CONSTRAINTS
+                </h2>
+              </div>
+              
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between py-2">
                   <div>
-                    <Label className="font-mono text-xs">MAX_RPS</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Rate ceiling. Automatic backoff if target degrades.
+                    <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">MAX_RPS</Label>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Rate ceiling with automatic backoff
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -262,27 +261,20 @@ export default function NewProject() {
                         ...prev, 
                         maxRps: parseInt(e.target.value) || 10 
                       }))}
-                      className="w-20 text-center font-mono"
+                      className="w-16 text-center"
                     />
-                    <span className="text-sm text-muted-foreground">RPS</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">RPS</span>
                   </div>
                 </div>
 
-                <Separator />
-
-                <div className="space-y-3">
-                  <Label className="font-mono text-xs">DO_NOT_TEST</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Excluded endpoints. Scanner will never probe these paths.
-                  </p>
-                  
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">DO_NOT_TEST</Label>
                   <div className="flex gap-2">
                     <Input
                       placeholder="/api/billing/*"
                       value={newRoute}
                       onChange={(e) => setNewRoute(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addDoNotTestRoute())}
-                      className="font-mono text-xs"
                     />
                     <Button type="button" variant="outline" size="sm" onClick={addDoNotTestRoute}>
                       <Plus className="w-4 h-4" />
@@ -297,7 +289,7 @@ export default function NewProject() {
                           variant="secondary"
                           className="gap-1 pr-1"
                         >
-                          <code className="text-xs">{route}</code>
+                          <code>{route}</code>
                           <button
                             type="button"
                             onClick={() => removeDoNotTestRoute(route)}
@@ -311,41 +303,23 @@ export default function NewProject() {
                   )}
                 </div>
               </div>
+            </section>
 
-              {/* Production Constraint Notice */}
-              {formData.environment === 'production' && (
-                <div className="flex items-start gap-3 p-4 rounded-sm bg-severity-medium/10 border border-severity-medium/30">
-                  <Info className="w-5 h-5 text-severity-medium mt-0.5" />
-                  <div>
-                    <p className="font-mono text-xs text-severity-medium">
-                      PROD ENVIRONMENT — RESTRICTED MODE
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Analysis limited to passive probes and light load ramp (max 5 RPS, 3 concurrent). 
-                      Soak and stress tests require STAGING or explicit authorization.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            <Separator />
 
-          {/* API Endpoints */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-primary" />
-                API Endpoints
-                <Badge variant="outline" className="font-mono text-[10px]">OPTIONAL</Badge>
-              </CardTitle>
-              <CardDescription>
-                Specify API paths for targeted endpoint analysis
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            {/* Section: API Endpoints */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="w-4 h-4 text-primary" />
+                <h2 className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
+                  API ENDPOINTS
+                </h2>
+                <Badge variant="outline">OPTIONAL</Badge>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="apiBasePath" className="font-mono text-xs">API_BASE</Label>
+                  <Label htmlFor="apiBasePath" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">API_BASE</Label>
                   <Input
                     id="apiBasePath"
                     placeholder="/api/v1"
@@ -354,11 +328,10 @@ export default function NewProject() {
                       ...prev, 
                       apiBasePath: e.target.value 
                     }))}
-                    className="font-mono text-xs"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="graphqlEndpoint" className="font-mono text-xs">GRAPHQL_ENDPOINT</Label>
+                  <Label htmlFor="graphqlEndpoint" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">GRAPHQL</Label>
                   <Input
                     id="graphqlEndpoint"
                     placeholder="/graphql"
@@ -367,25 +340,98 @@ export default function NewProject() {
                       ...prev, 
                       graphqlEndpoint: e.target.value 
                     }))}
-                    className="font-mono text-xs"
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </section>
+          </div>
+        </div>
+
+        {/* Right Panel - Summary & Actions */}
+        <div className="w-80 bg-muted/20 flex flex-col">
+          <div className="p-6 flex-1">
+            <h3 className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-6">
+              SCAN CONFIGURATION
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="p-3 border border-border bg-background">
+                <div className="text-[10px] font-mono text-muted-foreground mb-1">TARGET</div>
+                <div className="text-sm font-mono text-foreground truncate">
+                  {formData.name || '—'}
+                </div>
+              </div>
+              
+              <div className="p-3 border border-border bg-background">
+                <div className="text-[10px] font-mono text-muted-foreground mb-1">ENDPOINT</div>
+                <div className="text-xs font-mono text-foreground truncate">
+                  {formData.baseUrl || '—'}
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-3 border border-border bg-background">
+                  <div className="text-[10px] font-mono text-muted-foreground mb-1">ENV</div>
+                  <div className="text-xs font-mono text-foreground uppercase">
+                    {formData.environment}
+                  </div>
+                </div>
+                <div className="p-3 border border-border bg-background">
+                  <div className="text-[10px] font-mono text-muted-foreground mb-1">MODE</div>
+                  <div className="text-xs font-mono text-foreground uppercase">
+                    {formData.scanMode.replace('_', ' ')}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-3 border border-border bg-background">
+                <div className="text-[10px] font-mono text-muted-foreground mb-1">RATE LIMIT</div>
+                <div className="text-sm font-mono text-foreground">
+                  {formData.maxRps} RPS
+                </div>
+              </div>
+
+              {formData.doNotTestRoutes.length > 0 && (
+                <div className="p-3 border border-border bg-background">
+                  <div className="text-[10px] font-mono text-muted-foreground mb-1">EXCLUSIONS</div>
+                  <div className="text-xs font-mono text-foreground">
+                    {formData.doNotTestRoutes.length} routes
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Production Warning */}
+            {formData.environment === 'production' && (
+              <div className="mt-6 p-3 bg-severity-medium/10 border border-severity-medium/30">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-severity-medium mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-mono text-severity-medium uppercase">
+                      RESTRICTED MODE
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Limited to passive probes and light load ramp.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => navigate(-1)} className="font-mono text-xs">
+          <div className="p-6 border-t border-border space-y-2">
+            <Button type="submit" className="w-full gap-2">
+              <Shield className="w-4 h-4" />
+              AUTHORIZE & QUEUE
+              <ChevronRight className="w-4 h-4 ml-auto" />
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="w-full">
               ABORT
             </Button>
-            <Button type="submit" className="gap-2 font-mono text-xs">
-              <Shield className="w-4 h-4" />
-              AUTHORIZE & QUEUE SCAN
-            </Button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 }
