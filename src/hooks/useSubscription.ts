@@ -36,19 +36,22 @@
          throw new Error(data.error);
        }
  
-       setSubscription({
-         subscribed: data.subscribed ?? false,
-         tier: data.tier as SubscriptionTier | null,
-         price_id: data.price_id ?? null,
-         subscription_end: data.subscription_end ?? null,
-         cancel_at_period_end: data.cancel_at_period_end ?? false,
-         scan_limit: data.scan_limit ?? 0,
-         allow_soak: data.allow_soak ?? false,
-         allow_stress: data.allow_stress ?? false,
-         priority_queue: data.priority_queue ?? false,
-         retention_days: data.retention_days ?? 7,
-         max_concurrency: data.max_concurrency ?? 1,
-       });
+setSubscription({
+  subscribed: data.subscribed ?? false,
+  tier: data.tier as SubscriptionTier | null,
+  price_id: data.price_id ?? null,
+  subscription_end: data.subscription_end ?? null,
+  cancel_at_period_end: data.cancel_at_period_end ?? false,
+  scan_limit: data.scan_limit ?? 0,
+  scans_used: data.scans_used ?? 0,
+  scans_remaining: data.scans_remaining ?? 0,
+  period_reset_date: data.period_reset_date ?? null,
+  allow_soak: data.allow_soak ?? false,
+  allow_stress: data.allow_stress ?? false,
+  priority_queue: data.priority_queue ?? false,
+  retention_days: data.retention_days ?? 7,
+  max_concurrency: data.max_concurrency ?? 1,
+});
      } catch (err) {
        const message = err instanceof Error ? err.message : "Unknown error";
        setError(message);

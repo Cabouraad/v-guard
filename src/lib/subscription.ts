@@ -30,30 +30,36 @@
  
  export type SubscriptionTier = keyof typeof SUBSCRIPTION_TIERS;
  
- export interface SubscriptionState {
-   subscribed: boolean;
-   tier: SubscriptionTier | null;
-   price_id: string | null;
-   subscription_end: string | null;
-   cancel_at_period_end: boolean;
-   scan_limit: number;
-   allow_soak: boolean;
-   allow_stress: boolean;
-   priority_queue: boolean;
-   retention_days: number;
-   max_concurrency: number;
- }
+export interface SubscriptionState {
+  subscribed: boolean;
+  tier: SubscriptionTier | null;
+  price_id: string | null;
+  subscription_end: string | null;
+  cancel_at_period_end: boolean;
+  scan_limit: number;
+  scans_used: number;
+  scans_remaining: number;
+  period_reset_date: string | null;
+  allow_soak: boolean;
+  allow_stress: boolean;
+  priority_queue: boolean;
+  retention_days: number;
+  max_concurrency: number;
+}
  
- export const DEFAULT_SUBSCRIPTION_STATE: SubscriptionState = {
-   subscribed: false,
-   tier: null,
-   price_id: null,
-   subscription_end: null,
-   cancel_at_period_end: false,
-   scan_limit: 0,
-   allow_soak: false,
-   allow_stress: false,
-   priority_queue: false,
-   retention_days: 7,
-   max_concurrency: 1,
- };
+export const DEFAULT_SUBSCRIPTION_STATE: SubscriptionState = {
+  subscribed: false,
+  tier: null,
+  price_id: null,
+  subscription_end: null,
+  cancel_at_period_end: false,
+  scan_limit: 0,
+  scans_used: 0,
+  scans_remaining: 0,
+  period_reset_date: null,
+  allow_soak: false,
+  allow_stress: false,
+  priority_queue: false,
+  retention_days: 7,
+  max_concurrency: 1,
+};
