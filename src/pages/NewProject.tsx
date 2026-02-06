@@ -665,7 +665,7 @@ export default function NewProject() {
               )}
             </Button>
 
-            {!subscription.subscribed && (
+            {!subscription.subscribed && !subscription.is_test_user && (
               <Button 
                 type="button" 
                 variant="outline" 
