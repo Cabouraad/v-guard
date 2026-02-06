@@ -533,38 +533,6 @@ export type Database = {
           tier_name: string | null
           user_id: string | null
         }
-        Insert: {
-          allow_soak?: never
-          allow_stress?: never
-          cancel_at_period_end?: boolean | null
-          current_period_end?: string | null
-          current_period_start?: string | null
-          max_concurrency?: never
-          price_id?: string | null
-          priority_queue?: never
-          retention_days?: never
-          scan_limit_per_month?: never
-          status?: string | null
-          stripe_subscription_id?: string | null
-          tier_name?: never
-          user_id?: string | null
-        }
-        Update: {
-          allow_soak?: never
-          allow_stress?: never
-          cancel_at_period_end?: boolean | null
-          current_period_end?: string | null
-          current_period_start?: string | null
-          max_concurrency?: never
-          price_id?: string | null
-          priority_queue?: never
-          retention_days?: never
-          scan_limit_per_month?: never
-          status?: string | null
-          stripe_subscription_id?: string | null
-          tier_name?: never
-          user_id?: string | null
-        }
         Relationships: []
       }
     }
@@ -604,6 +572,7 @@ export type Database = {
         Args: { p_limit: number; p_period_start: string; p_user_id: string }
         Returns: number
       }
+      is_internal_test_user: { Args: { p_user_id: string }; Returns: boolean }
     }
     Enums: {
       confidence_level: "high" | "medium" | "low"
