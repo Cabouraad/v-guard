@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Lock, Settings, Save, Shield, Zap, FlaskConical } from 'lucide-react';
+import { Lock, Settings, Save, Shield, Zap, FlaskConical, ListChecks } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 interface UserConfig {
   maxRps: number;
@@ -28,6 +29,13 @@ export default function Config() {
   const [config, setConfig] = useState<UserConfig>(DEFAULT_CONFIG);
   const [isSaving, setIsSaving] = useState(false);
   const { subscription } = useSubscription();
+  const { completeStep, isCompleted, isDismissed, reopen } = useOnboarding();
+
+  // Mark onboarding steps on Config visit
+  useEffect(() => {
+    completeStep('step_confirmed_safety');
+    completeStep('step_adjust_controls');
+  }, [completeStep]);
 
   // Load saved config from localStorage (per-user config)
   useEffect(() => {
@@ -286,6 +294,30 @@ export default function Config() {
           )}
         </CardContent>
       </Card>
+      {/* Reopen Onboarding Checklist */}
+      {isCompleted || isDismissed ? (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ListChecks className="w-4 h-4 text-muted-foreground" />
+                <p className="text-xs font-mono text-muted-foreground">
+                  {isCompleted ? 'Setup checklist completed.' : 'Setup checklist dismissed.'}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={reopen}
+                className="font-mono text-xs gap-1"
+              >
+                <ListChecks className="w-3 h-3" />
+                Reopen Checklist
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

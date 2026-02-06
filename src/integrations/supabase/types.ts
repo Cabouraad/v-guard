@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      onboarding_progress: {
+        Row: {
+          completed: boolean
+          created_at: string
+          dismissed: boolean
+          id: string
+          step_add_application: boolean
+          step_adjust_controls: boolean
+          step_authorize_scan: boolean
+          step_confirmed_safety: boolean
+          step_review_findings: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          step_add_application?: boolean
+          step_adjust_controls?: boolean
+          step_authorize_scan?: boolean
+          step_confirmed_safety?: boolean
+          step_review_findings?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          dismissed?: boolean
+          id?: string
+          step_add_application?: boolean
+          step_adjust_controls?: boolean
+          step_authorize_scan?: boolean
+          step_confirmed_safety?: boolean
+          step_review_findings?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           api_base_path: string | null

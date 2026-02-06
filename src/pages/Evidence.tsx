@@ -15,6 +15,7 @@ import { FileText, ChevronDown, ChevronRight, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { ScanRun, ScanFinding, Project, ScanArtifact } from '@/types/database';
+import { useOnboarding } from '@/hooks/useOnboarding';
 
 function redactSecrets(text: string | null | undefined): string {
   if (!text) return '';
@@ -31,6 +32,14 @@ export default function Evidence() {
   const navigate = useNavigate();
   const [selectedFinding, setSelectedFinding] = useState<ScanFinding | null>(null);
   const [expandedFindings, setExpandedFindings] = useState<Set<string>>(new Set());
+  const { completeStep } = useOnboarding();
+
+  // Mark "Review Findings" step when visiting with a selected scan
+  useEffect(() => {
+    if (scanRunId) {
+      completeStep('step_review_findings');
+    }
+  }, [scanRunId, completeStep]);
 
   // Fetch recent scan runs for selection
   const { data: scanRuns, isLoading: runsLoading } = useQuery({
