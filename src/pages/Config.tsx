@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Lock, Settings, Save, Shield, Zap } from 'lucide-react';
+import { Lock, Settings, Save, Shield, Zap, FlaskConical } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface UserConfig {
   maxRps: number;
@@ -26,6 +27,7 @@ const DEFAULT_CONFIG: UserConfig = {
 export default function Config() {
   const [config, setConfig] = useState<UserConfig>(DEFAULT_CONFIG);
   const [isSaving, setIsSaving] = useState(false);
+  const { subscription } = useSubscription();
 
   // Load saved config from localStorage (per-user config)
   useEffect(() => {
@@ -92,6 +94,12 @@ export default function Config() {
       <div className="flex items-center gap-3">
         <Settings className="w-6 h-6 text-primary" />
         <h1 className="font-mono text-xl font-bold">CONFIG</h1>
+        {subscription.is_test_user && (
+          <Badge variant="outline" className="border-primary text-primary gap-1 text-[10px]">
+            <FlaskConical className="w-3 h-3" />
+            INTERNAL TEST ACCOUNT
+          </Badge>
+        )}
       </div>
 
       {/* Safety Lock Status */}

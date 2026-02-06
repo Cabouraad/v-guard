@@ -239,43 +239,57 @@ Deno.serve(async (req) => {
        );
      }
  
-     // ============================================
-     // 6. ENFORCE MONTHLY SCAN CAP
-     // ============================================
-     // Calculate period start (first of current month)
-     const now = new Date();
-     const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
- 
-     const { data: usageResult, error: usageError } = await supabaseAdmin
-       .rpc("increment_scan_usage", {
-         p_user_id: userId,
-         p_period_start: periodStart,
-         p_limit: ent.scan_limit_per_month,
-       });
- 
-     if (usageError) {
-       logStep("Usage increment error", { error: usageError.message });
-       throw new Error("INTERNAL: Failed to check usage");
-     }
- 
-     if (usageResult === -1) {
-       logStep("Usage limit exceeded", { limit: ent.scan_limit_per_month });
-       return new Response(
-         JSON.stringify({
-           error: "USAGE_LIMIT_EXCEEDED",
-           message: `Monthly scan limit of ${ent.scan_limit_per_month} reached`,
-           limit: ent.scan_limit_per_month,
-           tier: ent.tier_name,
-           upgradeUrl: "/pricing",
-         }),
-         {
-           headers: { ...corsHeaders, "Content-Type": "application/json" },
-           status: 429,
-         }
-       );
-     }
- 
-     logStep("Usage incremented", { newCount: usageResult, limit: ent.scan_limit_per_month });
+      // ============================================
+      // 6. ENFORCE MONTHLY SCAN CAP
+      // ============================================
+      // Internal test users bypass usage tracking entirely —
+      // their scans must not pollute billing metrics or analytics.
+      const { data: isTestUser } = await supabaseAdmin.rpc("is_internal_test_user", {
+        p_user_id: userId,
+      });
+
+      let usageResult: number | null = null;
+
+      if (isTestUser) {
+        logStep("Test user — skipping usage increment", { userId });
+        usageResult = 0; // Synthetic: unlimited
+      } else {
+        // Calculate period start (first of current month)
+        const now = new Date();
+        const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+
+        const { data: usageData, error: usageError } = await supabaseAdmin
+          .rpc("increment_scan_usage", {
+            p_user_id: userId,
+            p_period_start: periodStart,
+            p_limit: ent.scan_limit_per_month,
+          });
+
+        if (usageError) {
+          logStep("Usage increment error", { error: usageError.message });
+          throw new Error("INTERNAL: Failed to check usage");
+        }
+
+        if (usageData === -1) {
+          logStep("Usage limit exceeded", { limit: ent.scan_limit_per_month });
+          return new Response(
+            JSON.stringify({
+              error: "USAGE_LIMIT_EXCEEDED",
+              message: `Monthly scan limit of ${ent.scan_limit_per_month} reached`,
+              limit: ent.scan_limit_per_month,
+              tier: ent.tier_name,
+              upgradeUrl: "/pricing",
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 429,
+            }
+          );
+        }
+
+        usageResult = usageData;
+        logStep("Usage incremented", { newCount: usageResult, limit: ent.scan_limit_per_month });
+      }
  
      // ============================================
      // 7. DETERMINE TASKS TO CREATE
@@ -394,10 +408,10 @@ Deno.serve(async (req) => {
          status: scanRunPayload.status,
          tasksCreated: taskPayloads.length,
          taskTypes: tasksToCreate.map((t) => t.type),
-         entitlements: {
-           tier: ent.tier_name,
-           scansUsed: usageResult,
-           scansLimit: ent.scan_limit_per_month,
+          entitlements: {
+            tier: ent.tier_name,
+            scansUsed: usageResult ?? 0,
+            scansLimit: ent.scan_limit_per_month,
            allowSoak: ent.allow_soak,
            allowStress: ent.allow_stress,
            retentionDays: ent.retention_days,
