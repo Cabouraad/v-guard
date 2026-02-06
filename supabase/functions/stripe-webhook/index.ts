@@ -1,6 +1,5 @@
- import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
- import Stripe from "stripe";
- import { createClient } from "@supabase/supabase-js";
+import Stripe from "stripe";
+import { createClient } from "@supabase/supabase-js";
  
 // No CORS headers — this endpoint is called server-to-server by Stripe only.
 const jsonHeaders = { "Content-Type": "application/json" };
@@ -10,7 +9,7 @@ const jsonHeaders = { "Content-Type": "application/json" };
    console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
  };
  
-serve(async (req) => {
+Deno.serve(async (req) => {
   // Stripe webhooks are POST only — reject anything else.
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });

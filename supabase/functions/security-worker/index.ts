@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 
 // Internal worker — no CORS needed. Called server-to-server only.
 const jsonHeaders = { "Content-Type": "application/json" };
