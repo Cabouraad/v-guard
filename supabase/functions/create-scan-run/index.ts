@@ -1,5 +1,4 @@
- import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
- import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
  
 const ALLOWED_ORIGINS = [
   "https://v-guard.lovable.app",
@@ -74,7 +73,7 @@ function getCorsHeaders(req: Request): Record<string, string> {
    console.log(`[CREATE-SCAN-RUN] ${step}${detailsStr}`);
  };
  
-serve(async (req) => {
+Deno.serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
   if (req.method === "OPTIONS") {
