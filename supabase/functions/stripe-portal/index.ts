@@ -39,24 +39,40 @@ Deno.serve(async (req) => {
      if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
      logStep("Stripe key verified");
  
-     const supabaseClient = createClient(
-       Deno.env.get("SUPABASE_URL") ?? "",
-       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-       { auth: { persistSession: false } }
-     );
- 
-     const authHeader = req.headers.get("Authorization");
-     if (!authHeader) throw new Error("No authorization header provided");
- 
-     const token = authHeader.replace("Bearer ", "");
-     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-     if (userError) throw new Error(`Authentication error: ${userError.message}`);
-     
-     const user = userData.user;
-     if (!user?.email) throw new Error("User not authenticated or email not available");
-     logStep("User authenticated", { userId: user.id, email: user.email });
- 
-     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    
+    const user = userData.user;
+    if (!user?.email) throw new Error("User not authenticated or email not available");
+    logStep("User authenticated", { userId: user.id, email: user.email });
+
+    // ── Bypass Stripe for internal test users ──────────────────────
+    const { data: isTestUser } = await supabaseClient.rpc("is_internal_test_user", { p_user_id: user.id });
+    if (isTestUser) {
+      logStep("Internal test user detected — skipping Stripe portal", { userId: user.id });
+      return new Response(
+        JSON.stringify({
+          error: "TEST_USER_BYPASS",
+          message: "Internal test users have managed entitlements. No billing portal available.",
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
  
      // Find customer by email
      const customers = await stripe.customers.list({ email: user.email, limit: 1 });
