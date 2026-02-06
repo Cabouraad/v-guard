@@ -32,9 +32,9 @@
                  READ-ONLY
                </Badge>
              </TooltipTrigger>
-             <TooltipContent side="bottom" className="font-mono text-xs">
-               <p>Safe mode active. Click to authorize advanced tests.</p>
-             </TooltipContent>
+              <TooltipContent side="bottom" className="font-mono text-xs max-w-xs">
+                <p>READ-ONLY prevents any destructive behavior. ADVANCED enables deeper testing only after explicit approval.</p>
+              </TooltipContent>
            </Tooltip>
          </TooltipProvider>
          <button

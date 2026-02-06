@@ -6,15 +6,17 @@ import { HaltScanDialog } from '@/components/scan/HaltScanDialog';
  import { Button } from '@/components/ui/button';
  import { StatusBadge } from '@/components/ui/status-badge';
  import { ScoreRing } from '@/components/ui/score-ring';
- import { 
-   Pause, 
-  OctagonX, 
-   RefreshCw,
-   FileText,
-   Clock,
-   Terminal
- } from 'lucide-react';
+import { 
+    Pause, 
+   OctagonX, 
+    RefreshCw,
+    FileText,
+    Clock,
+    Terminal,
+    Info
+  } from 'lucide-react';
 import type { ScanTask, ScanStatus } from '@/types/database';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
   import { ScanSafetyBadge, useSafetyLock } from '@/components/safety';
 import { useRunWindow, WindowStatusBadge } from '@/components/scheduling';
 import { useHaltScan } from '@/hooks/useHaltScan';
@@ -310,12 +312,22 @@ import { useHaltScan } from '@/hooks/useHaltScan';
              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                {/* Timeline */}
                <div className="lg:col-span-3">
-                 <div className="mb-4 flex items-center gap-2">
-                   <Terminal className="w-4 h-4 text-primary" />
-                   <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                     Scan Progress Timeline
-                   </h2>
-                 </div>
+                <div className="mb-4 flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-primary" />
+                    <h2 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                      Scan Progress Timeline
+                    </h2>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="font-mono text-xs max-w-xs">
+                          <p>Each step runs sequentially and can halt automatically if safety thresholds are exceeded.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                  <ScanProgressTimeline
                    steps={timelineSteps}
                  />
