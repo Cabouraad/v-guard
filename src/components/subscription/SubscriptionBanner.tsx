@@ -6,7 +6,8 @@ import {
   Zap, 
   ArrowUpRight, 
   Settings2,
-  AlertCircle
+  AlertCircle,
+  FlaskConical
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { SubscriptionState } from '@/lib/subscription';
@@ -33,6 +34,9 @@ export function SubscriptionBanner({
   }
 
   if (!subscription.subscribed) {
+    // Test users should never see this, but guard anyway
+    if (subscription.is_test_user) return null;
+
     return (
       <div className="p-4 border border-severity-medium/30 bg-severity-medium/10">
         <div className="flex items-start gap-3">
@@ -60,49 +64,64 @@ export function SubscriptionBanner({
   const isNearLimit = usagePercent >= 80;
   const isAtLimit = subscription.scans_remaining === 0;
   const isProduction = subscription.tier === 'production';
+  const isTestUser = subscription.is_test_user;
 
   return (
     <div className="p-4 border border-border bg-background space-y-4">
       {/* Plan Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Crown className={`w-4 h-4 ${isProduction ? 'text-primary' : 'text-muted-foreground'}`} />
+          {isTestUser ? (
+            <FlaskConical className="w-4 h-4 text-primary" />
+          ) : (
+            <Crown className={`w-4 h-4 ${isProduction ? 'text-primary' : 'text-muted-foreground'}`} />
+          )}
           <span className="text-xs font-mono uppercase tracking-wider">
             {subscription.tier?.toUpperCase()} PLAN
           </span>
-          {isProduction && (
+          {isTestUser && (
+            <Badge variant="outline" className="text-[10px] border-primary text-primary">
+              INTERNAL
+            </Badge>
+          )}
+          {isProduction && !isTestUser && (
             <Badge variant="outline" className="text-[10px] border-primary text-primary">
               FULL ACCESS
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {!isProduction && (
-            <Button variant="outline" size="sm" onClick={onUpgrade} className="gap-1 text-xs">
-              <ArrowUpRight className="w-3 h-3" />
-              Upgrade
+        {/* Hide billing controls for test users */}
+        {!isTestUser && (
+          <div className="flex items-center gap-2">
+            {!isProduction && (
+              <Button variant="outline" size="sm" onClick={onUpgrade} className="gap-1 text-xs">
+                <ArrowUpRight className="w-3 h-3" />
+                Upgrade
+              </Button>
+            )}
+            <Button variant="ghost" size="sm" onClick={onManageBilling} className="gap-1 text-xs">
+              <Settings2 className="w-3 h-3" />
+              Billing
             </Button>
-          )}
-          <Button variant="ghost" size="sm" onClick={onManageBilling} className="gap-1 text-xs">
-            <Settings2 className="w-3 h-3" />
-            Billing
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Usage Stats */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs">
           <span className="font-mono text-muted-foreground">SCANS THIS PERIOD</span>
-          <span className={`font-mono ${isAtLimit ? 'text-severity-critical' : isNearLimit ? 'text-severity-medium' : 'text-foreground'}`}>
-            {subscription.scans_used} / {subscription.scan_limit}
+          <span className={`font-mono ${isAtLimit && !isTestUser ? 'text-severity-critical' : isNearLimit && !isTestUser ? 'text-severity-medium' : 'text-foreground'}`}>
+            {subscription.scans_used} / {isTestUser ? '∞' : subscription.scan_limit}
           </span>
         </div>
-        <Progress 
-          value={usagePercent} 
-          className={`h-1.5 ${isAtLimit ? '[&>div]:bg-severity-critical' : isNearLimit ? '[&>div]:bg-severity-medium' : ''}`}
-        />
-        {subscription.period_reset_date && (
+        {!isTestUser && (
+          <Progress 
+            value={usagePercent} 
+            className={`h-1.5 ${isAtLimit ? '[&>div]:bg-severity-critical' : isNearLimit ? '[&>div]:bg-severity-medium' : ''}`}
+          />
+        )}
+        {!isTestUser && subscription.period_reset_date && (
           <p className="text-[10px] text-muted-foreground">
             Resets {format(new Date(subscription.period_reset_date), 'MMM d, yyyy')}
           </p>
@@ -125,8 +144,8 @@ export function SubscriptionBanner({
         </Badge>
       </div>
 
-      {/* Warnings */}
-      {isAtLimit && (
+      {/* Warnings - never show limit warnings for test users */}
+      {isAtLimit && !isTestUser && (
         <div className="p-2 bg-severity-critical/10 border border-severity-critical/30 text-xs">
           <span className="font-mono text-severity-critical">LIMIT REACHED</span>
           <span className="text-muted-foreground ml-2">

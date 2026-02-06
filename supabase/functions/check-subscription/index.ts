@@ -71,6 +71,12 @@ Deno.serve(async (req) => {
     if (!user) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id });
 
+    // Check if this is an internal test user (server-side only, cannot be spoofed)
+    const { data: isTestUser } = await supabase.rpc("is_internal_test_user", {
+      p_user_id: user.id,
+    });
+    logStep("Test user check", { isTestUser: !!isTestUser });
+
     // ── Read entitlements from DB (no Stripe API call) ──────────────
     const { data: entitlements, error: entError } = await supabase
       .rpc("get_user_entitlements", { p_user_id: user.id });
@@ -126,6 +132,7 @@ Deno.serve(async (req) => {
       priority_queue: ent.priority_queue,
       retention_days: ent.retention_days,
       max_concurrency: ent.max_concurrency,
+      is_test_user: !!isTestUser,
     };
 
     logStep("Returning DB-driven entitlements", {

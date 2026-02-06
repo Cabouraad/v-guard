@@ -45,6 +45,7 @@ export interface SubscriptionState {
   priority_queue: boolean;
   retention_days: number;
   max_concurrency: number;
+  is_test_user: boolean;
 }
  
 export const DEFAULT_SUBSCRIPTION_STATE: SubscriptionState = {
@@ -62,4 +63,5 @@ export const DEFAULT_SUBSCRIPTION_STATE: SubscriptionState = {
   priority_queue: false,
   retention_days: 7,
   max_concurrency: 1,
+  is_test_user: false,
 };

@@ -51,6 +51,7 @@ setSubscription({
   priority_queue: data.priority_queue ?? false,
   retention_days: data.retention_days ?? 7,
   max_concurrency: data.max_concurrency ?? 1,
+  is_test_user: data.is_test_user ?? false,
 });
      } catch (err) {
        const message = err instanceof Error ? err.message : "Unknown error";
