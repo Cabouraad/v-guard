@@ -27,8 +27,11 @@ export function NavRail() {
     <TooltipProvider delayDuration={0}>
       <nav className="flex flex-col items-center w-14 h-screen bg-background border-r border-border py-4">
         {/* Logo */}
-        <div className="flex items-center justify-center w-10 h-10 mb-8">
-          <Shield className="w-6 h-6 text-primary" />
+        <div className="flex flex-col items-center justify-center mb-8 gap-1">
+          <div className="w-10 h-10 flex items-center justify-center">
+            <Shield className="w-6 h-6 text-primary" />
+          </div>
+          <span className="text-[7px] font-mono tracking-widest text-muted-foreground leading-none">BETA</span>
         </div>
 
         {/* Nav Items */}
