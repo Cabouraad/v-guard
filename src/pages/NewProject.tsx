@@ -183,9 +183,19 @@ export default function NewProject() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="environment" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
-                      ENV CLASS *
-                    </Label>
+                     <div className="flex items-center gap-1.5">
+                       <Label htmlFor="environment" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                         ENV CLASS *
+                       </Label>
+                       <Tooltip>
+                         <TooltipTrigger asChild>
+                           <Info className="w-3 h-3 text-muted-foreground cursor-help" />
+                         </TooltipTrigger>
+                         <TooltipContent side="top" className="font-mono text-xs max-w-xs">
+                           <p>Production scans are limited by default. Heavier testing requires explicit approval.</p>
+                         </TooltipContent>
+                       </Tooltip>
+                     </div>
                     <Select
                       value={formData.environment}
                       onValueChange={(val: EnvironmentType) => 
@@ -394,6 +404,14 @@ export default function NewProject() {
 
               <TooltipProvider>
                 <div className="space-y-3">
+                  <div className="p-2.5 rounded-sm bg-muted/50 border border-border">
+                    <div className="flex items-center gap-1.5">
+                      <Info className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        Soak and stress tests are gated to prevent accidental production impact.
+                      </span>
+                    </div>
+                  </div>
                   {/* Soak Test Toggle */}
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -646,24 +664,33 @@ export default function NewProject() {
               </div>
             )}
 
-            <Button 
-              type="submit" 
-              className="w-full gap-2"
-              disabled={!canSubmit || submitting}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  AUTHORIZING...
-                </>
-              ) : (
-                <>
-                  <Shield className="w-4 h-4" />
-                  AUTHORIZE & QUEUE
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </>
-              )}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    type="submit" 
+                    className="w-full gap-2"
+                    disabled={!canSubmit || submitting}
+                  >
+                    {submitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        AUTHORIZING...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="w-4 h-4" />
+                        AUTHORIZE & QUEUE
+                        <ChevronRight className="w-4 h-4 ml-auto" />
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="font-mono text-xs max-w-xs">
+                  <p>Scans run only after explicit authorization and within defined safety limits.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             {!subscription.subscribed && !subscription.is_test_user && (
               <Button 

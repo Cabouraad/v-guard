@@ -1,10 +1,11 @@
  import { useEffect, useRef } from 'react';
- import { X, Copy, Check, FileText, Terminal, Image as ImageIcon, Archive, Clock, Hash } from 'lucide-react';
+ import { X, Copy, Check, FileText, Terminal, Image as ImageIcon, Archive, Clock, Hash, HelpCircle } from 'lucide-react';
  import { cn } from '@/lib/utils';
  import { Button } from '@/components/ui/button';
  import { ScrollArea } from '@/components/ui/scroll-area';
- import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
- import { useEvidencePanel, EvidenceTabType } from './EvidencePanelContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useEvidencePanel, EvidenceTabType } from './EvidencePanelContext';
  import { useState } from 'react';
  import { toast } from 'sonner';
  
@@ -215,9 +216,21 @@
        )}
      >
        {/* Header */}
-       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/50">
-         <div>
-           <h3 className="font-mono text-xs text-foreground uppercase tracking-wider">EVIDENCE INSPECTOR</h3>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card/50">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-mono text-xs text-foreground uppercase tracking-wider">EVIDENCE INSPECTOR</h3>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="left" className="font-mono text-xs max-w-xs">
+                    <p>All evidence is redacted and tied to a specific scan run for auditability.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
            {getFilterLabel() && (
              <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
                Filter: {getFilterLabel()}
