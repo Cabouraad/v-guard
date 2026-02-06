@@ -1,6 +1,7 @@
-import { Bell, User, LogOut, Command, Settings } from 'lucide-react';
+import { Bell, User, LogOut, Command, Settings, FlaskConical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { SafetyLockIndicator, SafetyLockPanel, WhyLockedPanel, useSafetyLock } from '@/components/safety';
 import { useCommandPalette } from '@/components/command';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 
 interface HeaderProps {
   title?: string;
@@ -23,6 +25,7 @@ export function Header({ title, subtitle }: HeaderProps) {
   const { isPanelOpen, openPanel, closePanel, isWhyLockedOpen, openWhyLocked, closeWhyLocked } = useSafetyLock();
   const { openPalette } = useCommandPalette();
   const { user, signOut } = useAuth();
+  const { subscription } = useSubscription();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -81,6 +84,14 @@ export function Header({ title, subtitle }: HeaderProps) {
             <DropdownMenuLabel className="font-mono text-xs">
               {user?.email || 'OPERATOR SESSION'}
             </DropdownMenuLabel>
+            {subscription.is_test_user && (
+              <div className="px-2 pb-1">
+                <Badge variant="outline" className="text-[9px] border-primary text-primary gap-1">
+                  <FlaskConical className="w-2.5 h-2.5" />
+                  INTERNAL TEST ACCOUNT
+                </Badge>
+              </div>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="font-mono text-xs cursor-pointer"
