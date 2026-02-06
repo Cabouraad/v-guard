@@ -3,24 +3,32 @@
  import { Button } from '@/components/ui/button';
  import { SiteNav, SiteFooter } from '@/components/marketing';
  
- const faqs = [
-   {
-     question: 'Does this do both security scanning and load testing?',
-     answer: 'Yes. Security analysis runs first, then controlled performance/load testing is applied to the same surfaces — all within strict safety guardrails.',
-   },
-   {
-     question: 'Is this a penetration test?',
-     answer: 'No. It is a safety-first analysis tool designed to identify risks and failure modes without destructive behavior by default.',
-   },
-   {
-     question: 'Is it safe for production?',
-     answer: 'Baseline checks are production-safe. Heavier testing requires explicit approval and includes strict rate limits and a halt switch.',
-   },
-   {
-     question: 'What do I need to provide?',
-     answer: 'At minimum: a URL and permission. For deeper analysis: a test account or token. For best results: staging access.',
-   },
- ];
+const faqs = [
+  {
+    question: 'Does this do both security scanning and load testing?',
+    answer: 'Yes. Security analysis runs first, then controlled performance/load testing is applied to the same surfaces — all within strict safety guardrails.',
+  },
+  {
+    question: 'Is this a penetration test?',
+    answer: 'No. It is a safety-first analysis tool designed to identify risks and failure modes without destructive behavior by default.',
+  },
+  {
+    question: 'Is it safe for production?',
+    answer: 'Baseline checks are production-safe. Heavier testing requires explicit approval and includes strict rate limits and a halt switch.',
+  },
+  {
+    question: 'What do I need to provide?',
+    answer: 'At minimum: a URL and permission. For deeper analysis: a test account or token. For best results: staging access.',
+  },
+  {
+    question: "What does 'public beta' mean?",
+    answer: 'The core platform is production-safe and feature-complete for security analysis and load testing. Public beta indicates that we are expanding automation, integrations, and reporting based on real-world usage and feedback.',
+  },
+  {
+    question: 'Is it safe to use this on real applications?',
+    answer: 'Yes. All scans are read-only by default, explicitly authorized, rate-limited, and environment-aware. Advanced testing requires deliberate operator approval.',
+  },
+];
  
  export default function FAQ() {
    return (

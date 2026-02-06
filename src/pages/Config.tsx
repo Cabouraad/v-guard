@@ -186,6 +186,23 @@ export default function Config() {
         </CardContent>
       </Card>
 
+      {/* Beta Status */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-mono text-muted-foreground">
+              Public Beta — feedback helps prioritize what we harden and automate next.
+            </p>
+            <a
+              href="mailto:feedback@vibesec.dev"
+              className="text-xs font-mono text-primary hover:text-primary/80 transition-colors shrink-0 ml-4"
+            >
+              Provide feedback
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Plan & Entitlements */}
       <Card>
         <CardHeader>

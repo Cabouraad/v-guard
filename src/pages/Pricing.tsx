@@ -206,12 +206,15 @@
              })}
            </div>
  
-           {/* Note */}
-           <div className="mt-8 text-center">
-             <p className="text-[11px] font-mono text-muted-foreground">
-               Heavy testing is gated and auditable.
-             </p>
-           </div>
+            {/* Note */}
+            <div className="mt-8 text-center space-y-2">
+              <p className="text-[11px] font-mono text-muted-foreground">
+                Heavy testing is gated and auditable.
+              </p>
+              <p className="text-[10px] font-mono text-muted-foreground/60">
+                Beta pricing applies during the public beta period. Plan limits and safety guarantees apply as listed.
+              </p>
+            </div>
          </div>
        </section>
  

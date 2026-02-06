@@ -29,6 +29,9 @@ export function SiteNav() {
         <Link to="/" className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-primary" />
           <span className="font-mono text-sm tracking-tight">VIBE_SEC</span>
+          <span className="text-[9px] font-mono tracking-widest text-muted-foreground border border-border/50 px-1.5 py-0.5 rounded-sm leading-none">
+            BETA
+          </span>
         </Link>
         
         <div className="flex items-center gap-8">

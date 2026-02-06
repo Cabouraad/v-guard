@@ -35,8 +35,12 @@ export default function Landing() {
                 using safety-first scans designed for modern, AI-built software.
               </p>
               
-              <p className="text-[11px] font-mono text-muted-foreground/80 mb-10">
+              <p className="text-[11px] font-mono text-muted-foreground/80 mb-4">
                 Read-only by default. Production-safe. Evidence-backed.
+              </p>
+
+              <p className="text-[11px] text-muted-foreground/60 leading-relaxed mb-10">
+                Currently in public beta. Core scanning and safety controls are production-ready. Advanced automation and integrations are rolling out incrementally.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -134,6 +138,15 @@ export default function Landing() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* SAFETY REASSURANCE */}
+      <section className="py-8 px-6 border-t border-border/30">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-sm text-muted-foreground leading-relaxed text-center">
+            Beta status does not affect scan safety. All scans are read-only by default, rate-limited, environment-aware, and explicitly authorized by the operator.
+          </p>
         </div>
       </section>
 

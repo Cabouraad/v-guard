@@ -220,10 +220,21 @@
          </div>
        </section>
  
-       {/* CTA */}
-       <section className="py-20 px-6 border-t border-border/30">
-         <div className="max-w-2xl mx-auto text-center">
-           <h2 className="text-2xl font-mono font-light mb-4">Ready to Run a Safe Scan</h2>
+        {/* BETA SAFETY REASSURANCE */}
+        <section className="py-12 px-6 border-t border-border/30">
+          <div className="max-w-4xl mx-auto">
+            <div className="border border-border/50 bg-muted/10 p-6">
+              <p className="text-sm text-foreground leading-relaxed">
+                Beta status does not affect scan safety. All scans are read-only by default, rate-limited, environment-aware, and explicitly authorized by the operator.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-20 px-6 border-t border-border/30">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-2xl font-mono font-light mb-4">Ready to Run a Safe Scan</h2>
            <p className="text-sm text-muted-foreground mb-10">
              All safety controls are enabled by default. You choose what to unlock.
            </p>
