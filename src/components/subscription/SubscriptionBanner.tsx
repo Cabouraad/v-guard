@@ -46,13 +46,13 @@ export function SubscriptionBanner({
               NO ACTIVE SUBSCRIPTION
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Subscribe to scan your targets and receive security reports.
-            </p>
+               An active subscription is required to authorize scans and generate reports.
+             </p>
           </div>
-          <Button size="sm" onClick={onUpgrade} className="gap-1">
-            <Zap className="w-3 h-3" />
-            Subscribe
-          </Button>
+           <Button size="sm" onClick={onUpgrade} className="gap-1">
+             <Zap className="w-3 h-3" />
+             ACTIVATE
+           </Button>
         </div>
       </div>
     );
@@ -94,15 +94,15 @@ export function SubscriptionBanner({
         {!isTestUser && (
           <div className="flex items-center gap-2">
             {!isProduction && (
-              <Button variant="outline" size="sm" onClick={onUpgrade} className="gap-1 text-xs">
-                <ArrowUpRight className="w-3 h-3" />
-                Upgrade
-              </Button>
+              <Button variant="outline" size="sm" onClick={onUpgrade} className="gap-1 text-xs font-mono">
+                 <ArrowUpRight className="w-3 h-3" />
+                 UPGRADE TIER
+               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={onManageBilling} className="gap-1 text-xs">
-              <Settings2 className="w-3 h-3" />
-              Billing
-            </Button>
+            <Button variant="ghost" size="sm" onClick={onManageBilling} className="gap-1 text-xs font-mono">
+               <Settings2 className="w-3 h-3" />
+               BILLING
+             </Button>
           </div>
         )}
       </div>
@@ -148,9 +148,9 @@ export function SubscriptionBanner({
       {isAtLimit && !isTestUser && (
         <div className="p-2 bg-severity-critical/10 border border-severity-critical/30 text-xs">
           <span className="font-mono text-severity-critical">LIMIT REACHED</span>
-          <span className="text-muted-foreground ml-2">
-            Upgrade to continue scanning or wait for reset.
-          </span>
+           <span className="text-muted-foreground ml-2">
+             Scan authorization blocked until period reset or tier upgrade.
+           </span>
         </div>
       )}
     </div>
