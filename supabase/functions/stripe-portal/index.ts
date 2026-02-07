@@ -47,20 +47,21 @@ Deno.serve(async (req) => {
     );
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader?.startsWith("Bearer ")) throw new Error("No authorization header provided");
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    
-    const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) throw new Error(`Authentication error: ${claimsError?.message || "Invalid token"}`);
+
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+    if (!userEmail) throw new Error("User email not available in token");
+    logStep("User authenticated", { userId, email: userEmail });
 
     // ── Bypass Stripe for internal test users ──────────────────────
-    const { data: isTestUser } = await supabaseClient.rpc("is_internal_test_user", { p_user_id: user.id });
+    const { data: isTestUser } = await supabaseClient.rpc("is_internal_test_user", { p_user_id: userId });
     if (isTestUser) {
-      logStep("Internal test user detected — skipping Stripe portal", { userId: user.id });
+      logStep("Internal test user detected — skipping Stripe portal", { userId });
       return new Response(
         JSON.stringify({
           error: "TEST_USER_BYPASS",
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
  
      // Find customer by email
-     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
      if (customers.data.length === 0) {
        throw new Error("No Stripe customer found for this user");
      }
