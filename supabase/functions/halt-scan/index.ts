@@ -5,6 +5,7 @@ const jsonHeaders = { "Content-Type": "application/json" };
 const ALLOWED_ORIGINS = [
   "https://v-guard.lovable.app",
   "https://id-preview--f5ffb258-a61b-4eb2-a12c-ab21db0c5ae9.lovable.app",
+  "https://f5ffb258-a61b-4eb2-a12c-ab21db0c5ae9.lovableproject.com",
 ];
 
 function getCorsHeaders(req: Request) {
