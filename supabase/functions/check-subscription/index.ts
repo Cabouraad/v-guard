@@ -62,14 +62,46 @@ Deno.serve(async (req) => {
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No authorization header provided" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
 
-    const user = userData.user;
-    if (!user) throw new Error("User not authenticated");
+    // Retry getUser up to 2 times to handle transient "Auth session missing" errors
+    let userData;
+    let userError;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const result = await supabase.auth.getUser(token);
+      userData = result.data;
+      userError = result.error;
+      if (!userError && userData?.user) break;
+      if (attempt < 2) {
+        logStep(`getUser attempt ${attempt + 1} failed, retrying...`, {
+          error: userError?.message,
+        });
+        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+      }
+    }
+
+    if (userError) {
+      logStep("Authentication failed after retries", { error: userError.message });
+      return new Response(JSON.stringify({ error: `Authentication error: ${userError.message}` }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
+
+    const user = userData?.user;
+    if (!user) {
+      return new Response(JSON.stringify({ error: "User not authenticated" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 401,
+      });
+    }
     logStep("User authenticated", { userId: user.id });
 
     // Check if this is an internal test user (server-side only, cannot be spoofed)
