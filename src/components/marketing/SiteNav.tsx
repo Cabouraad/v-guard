@@ -8,6 +8,7 @@ const navLinks = [
   { href: '/safety', label: 'SAFETY CONTROLS' },
   { href: '/pricing', label: 'PRICING' },
   { href: '/faq', label: 'FAQ' },
+  { href: '/support', label: 'SUPPORT' },
 ];
 
 export function SiteNav() {
