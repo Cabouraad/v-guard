@@ -7,7 +7,9 @@ import {
   ArrowUpRight, 
   Settings2,
   AlertCircle,
-  FlaskConical
+  FlaskConical,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { SubscriptionState } from '@/lib/subscription';
@@ -15,6 +17,8 @@ import type { SubscriptionState } from '@/lib/subscription';
 interface SubscriptionBannerProps {
   subscription: SubscriptionState;
   loading: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   onUpgrade: () => void;
   onManageBilling: () => void;
 }
@@ -22,13 +26,43 @@ interface SubscriptionBannerProps {
 export function SubscriptionBanner({ 
   subscription, 
   loading, 
+  error,
+  onRetry,
   onUpgrade, 
   onManageBilling 
 }: SubscriptionBannerProps) {
   if (loading) {
     return (
       <div className="p-4 border border-border bg-muted/20 animate-pulse">
-        <div className="h-4 w-32 bg-muted rounded" />
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          <div className="h-4 w-32 bg-muted rounded" />
+        </div>
+      </div>
+    );
+  }
+
+  // If check failed with an error, show a retry state instead of "NO ACTIVE SUBSCRIPTION"
+  if (!subscription.subscribed && error) {
+    return (
+      <div className="p-4 border border-severity-medium/30 bg-severity-medium/10">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-severity-medium mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-xs font-mono uppercase tracking-wider text-severity-medium">
+              CONNECTION ERROR
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Could not verify subscription status. Please retry.
+            </p>
+          </div>
+          {onRetry && (
+            <Button size="sm" variant="outline" onClick={onRetry} className="gap-1">
+              <RefreshCw className="w-3 h-3" />
+              RETRY
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
