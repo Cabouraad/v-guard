@@ -11,6 +11,7 @@ import Landing from "@/pages/Landing";
 import Safety from "@/pages/Safety";
 import Pricing from "@/pages/Pricing";
 import FAQ from "@/pages/FAQ";
+import Support from "@/pages/Support";
 import Auth from "@/pages/Auth";
 import Projects from "@/pages/Projects";
 import NewProject from "@/pages/NewProject";
@@ -47,6 +48,7 @@ const App = () => (
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/support" element={<Support />} />
                     
                     {/* Protected Dashboard with nav rail - ALL authenticated routes */}
                     <Route

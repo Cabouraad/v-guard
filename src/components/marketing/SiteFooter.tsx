@@ -11,20 +11,23 @@
              <span className="text-[11px] font-mono text-muted-foreground">VIBE_SEC v2.0</span>
            </div>
            
-           <div className="flex items-center gap-6">
-             <Link to="/" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
-               HOME
-             </Link>
-             <Link to="/safety" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
-               SAFETY
-             </Link>
-             <Link to="/pricing" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
-               PRICING
-             </Link>
-             <Link to="/faq" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
-               FAQ
-             </Link>
-           </div>
+            <div className="flex items-center gap-6">
+              <Link to="/" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
+                HOME
+              </Link>
+              <Link to="/safety" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
+                SAFETY
+              </Link>
+              <Link to="/pricing" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
+                PRICING
+              </Link>
+              <Link to="/faq" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
+                FAQ
+              </Link>
+              <Link to="/support" className="text-[11px] font-mono text-muted-foreground hover:text-foreground transition-colors">
+                SUPPORT
+              </Link>
+            </div>
          </div>
          
         <div className="mt-8 pt-6 border-t border-border/20 flex flex-col md:flex-row items-center justify-between gap-4">
