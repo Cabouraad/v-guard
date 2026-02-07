@@ -104,23 +104,40 @@ export default function NewProject() {
     setSubmitting(true);
 
     try {
+      // Step 1: Create the project in the database
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { data: project, error: projectError } = await supabase
+        .from('projects')
+        .insert({
+          name: formData.name,
+          base_url: formData.baseUrl,
+          environment: formData.environment,
+          api_base_path: formData.apiBasePath || null,
+          graphql_endpoint: formData.graphqlEndpoint || null,
+          max_rps: formData.maxRps,
+          do_not_test_routes: formData.doNotTestRoutes,
+          user_id: user.id,
+        })
+        .select('id')
+        .single();
+
+      if (projectError || !project) {
+        throw new Error(projectError?.message || 'Failed to create target');
+      }
+
+      // Step 2: Call create-scan-run with flat fields matching edge function contract
       const { data, error } = await supabase.functions.invoke('create-scan-run', {
         body: {
-          project: {
-            name: formData.name,
-            base_url: formData.baseUrl,
-            environment: formData.environment,
-            api_base_path: formData.apiBasePath || null,
-            graphql_endpoint: formData.graphqlEndpoint || null,
-            max_rps: formData.maxRps,
-            do_not_test_routes: formData.doNotTestRoutes,
-          },
-          scan_config: {
-            mode: formData.scanMode,
-            enable_soak: formData.enableSoak,
-            enable_stress: formData.enableStress,
-            approved_for_production: formData.approveForProduction,
-          },
+          projectId: project.id,
+          mode: formData.scanMode,
+          maxRps: formData.maxRps,
+          maxConcurrency: 2,
+          enableSoak: formData.enableSoak,
+          enableStress: formData.enableStress,
+          doNotTestPatterns: formData.doNotTestRoutes,
+          userApprovedProduction: formData.approveForProduction,
         },
       });
 
@@ -129,9 +146,8 @@ export default function NewProject() {
       }
 
       if (data?.error) {
-        // Show server error verbatim
         setServerError(data.error);
-        toast.error(data.error);
+        toast.error(data.message || data.error);
         return;
       }
 
@@ -139,7 +155,7 @@ export default function NewProject() {
       await checkSubscription();
 
       toast.success('Target authorized. Scan queued for execution.');
-      navigate(`/dashboard/scans/${data.scan_run_id}`);
+      navigate(`/dashboard/scans/${data.scanRunId}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create scan';
       setServerError(message);
