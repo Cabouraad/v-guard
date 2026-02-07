@@ -36,64 +36,63 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Deduplication: track in-flight call with a monotonic counter.
-  // Only the latest call is allowed to write state.
-  const callIdRef = useRef(0);
+  // Track whether any call is currently in-flight to avoid duplicate work
+  const inflightRef = useRef(false);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Track if we've ever received a successful response this session
-  const hasSucceededRef = useRef(false);
 
   const checkSubscription = useCallback(async () => {
-    // Increment call ID — only the latest caller will write state
-    const thisCallId = ++callIdRef.current;
+    // If a call is already in-flight, skip — the result will update state
+    if (inflightRef.current) {
+      console.log("[useSubscription] Skipping duplicate call, one already in-flight");
+      return;
+    }
+
+    inflightRef.current = true;
 
     try {
       setLoading(true);
 
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
-        // No session = not logged in; only write if still latest call
-        if (thisCallId === callIdRef.current) {
-          setSubscription(DEFAULT_SUBSCRIPTION_STATE);
+        setSubscription(DEFAULT_SUBSCRIPTION_STATE);
+        setError(null);
+        return;
+      }
+
+      // Retry up to 3 times with backoff for transient failures
+      let lastError: Error | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const { data, error: fnError } = await supabase.functions.invoke(
+            "check-subscription"
+          );
+
+          if (fnError) throw new Error(fnError.message);
+          if (data?.error) throw new Error(data.error);
+
+          // Success — update state and return immediately
           setError(null);
-          setLoading(false);
+          setSubscription(mapResponseToState(data));
+          console.log("[useSubscription] Success", { tier: data.tier, attempt });
+          return;
+        } catch (err) {
+          lastError = err instanceof Error ? err : new Error(String(err));
+          console.warn(
+            `[useSubscription] Attempt ${attempt + 1}/3 failed:`,
+            lastError.message
+          );
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+          }
         }
-        return;
       }
 
-      const { data, error: fnError } = await supabase.functions.invoke(
-        "check-subscription"
-      );
-
-      // Stale call — a newer one has started, discard this result
-      if (thisCallId !== callIdRef.current) return;
-
-      if (fnError) throw new Error(fnError.message);
-      if (data?.error) throw new Error(data.error);
-
-      // Success — update state
-      hasSucceededRef.current = true;
-      setError(null);
-      setSubscription(mapResponseToState(data));
-    } catch (err) {
-      // Stale call — discard
-      if (thisCallId !== callIdRef.current) return;
-
-      const message = err instanceof Error ? err.message : "Unknown error";
-
-      // If we've already received valid subscription data this session,
-      // don't overwrite it with an error — just log and ignore.
-      if (hasSucceededRef.current) {
-        console.warn("[useSubscription] Transient error after prior success, ignoring:", message);
-        return;
-      }
-
-      setError(message);
-      console.error("[useSubscription] Error:", message);
+      // All 3 attempts failed
+      setError(lastError?.message ?? "Unknown error");
+      console.error("[useSubscription] All retries exhausted:", lastError?.message);
     } finally {
-      if (thisCallId === callIdRef.current) {
-        setLoading(false);
-      }
+      inflightRef.current = false;
+      setLoading(false);
     }
   }, []);
 
@@ -136,7 +135,7 @@ export function useSubscription() {
     }
   }, []);
 
-  // Check subscription on auth state changes — debounced via callIdRef
+  // Check subscription on auth state changes — deduplicated via inflightRef
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -148,12 +147,10 @@ export function useSubscription() {
           if (session) {
             checkSubscription();
           } else {
-            hasSucceededRef.current = false;
             setSubscription(DEFAULT_SUBSCRIPTION_STATE);
             setLoading(false);
           }
         } else if (event === "SIGNED_OUT") {
-          hasSucceededRef.current = false;
           setSubscription(DEFAULT_SUBSCRIPTION_STATE);
           setLoading(false);
         }
@@ -165,13 +162,13 @@ export function useSubscription() {
     };
   }, [checkSubscription]);
 
-  // Auto-retry when in error state — self-heal after 3 seconds
+  // Auto-retry when in error state — self-heal after 5 seconds
   useEffect(() => {
     if (error && !subscription.subscribed) {
       retryTimeoutRef.current = setTimeout(() => {
         console.log("[useSubscription] Auto-retrying after error...");
         checkSubscription();
-      }, 3000);
+      }, 5000);
       return () => {
         if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
       };
