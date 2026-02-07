@@ -78,10 +78,10 @@
              <Shield className="w-5 h-5 text-severity-medium" />
              AUTHORIZE ADVANCED TESTING
            </SheetTitle>
-           <SheetDescription className="font-mono text-xs">
-             Advanced modules perform destructive or high-load operations. 
-             Explicit authorization required.
-           </SheetDescription>
+            <SheetDescription className="font-mono text-xs">
+              Advanced modules perform destructive or high-load operations.
+              Each must be individually authorized before execution.
+            </SheetDescription>
          </SheetHeader>
  
          <div className="mt-6 space-y-6">
@@ -178,8 +178,8 @@
                    I UNDERSTAND THE RISKS
                  </Label>
                  <p className="text-xs text-muted-foreground mt-1">
-                   Advanced modules may cause service degradation, trigger alerts, 
-                   or expose vulnerabilities. I accept responsibility for this scan.
+                    Advanced modules may cause service degradation, trigger monitoring alerts,
+                    or expose vulnerabilities. I accept operational responsibility for this scan.
                  </p>
                </div>
              </div>
@@ -195,8 +195,8 @@
                      PRODUCTION ENVIRONMENT — ELEVATED RISK
                    </p>
                    <p className="text-xs text-muted-foreground mb-3">
-                     Running advanced tests on production may impact real users. 
-                     Circuit breaker will halt if thresholds exceeded, but damage may occur.
+                    Advanced tests on production systems may impact live users.
+                      The circuit breaker will halt operations if thresholds are exceeded, but partial impact may occur.
                    </p>
                    <div className="flex items-start gap-2">
                      <Checkbox

@@ -97,7 +97,7 @@ export default function NewProject() {
     }
 
     if (!canSubmit) {
-      toast.error('Subscription required or scan limit reached.');
+      toast.error('Authorization blocked: Active subscription required or scan limit reached for this period.');
       return;
     }
 
@@ -456,47 +456,51 @@ export default function NewProject() {
                         </div>
                       </button>
                     </TooltipTrigger>
-                    {!isProductionTier && (
-                      <TooltipContent>
-                        <p>Upgrade to Production tier to enable soak testing</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
+                     <TooltipContent className="font-mono text-xs max-w-xs">
+                       {!isProductionTier ? (
+                         <p>Soak tests require Production-tier authorization. Extended load can degrade live systems.</p>
+                       ) : (
+                         <p>Extended-duration load test. Monitors for memory leaks and resource degradation.</p>
+                       )}
+                     </TooltipContent>
+                   </Tooltip>
 
-                  {/* Stress Test Toggle */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        type="button"
-                        disabled={!isProductionTier}
-                        onClick={() => setFormData(prev => ({ ...prev, enableStress: !prev.enableStress }))}
-                        className={`w-full p-3 border text-left transition-all ${
-                          !isProductionTier
-                            ? 'opacity-50 cursor-not-allowed border-border'
-                            : formData.enableStress
-                              ? 'border-primary bg-primary/10'
-                              : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-mono text-xs uppercase tracking-wider">STRESS TEST</h4>
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              High-load breaking point analysis
-                            </p>
-                          </div>
-                          <Badge variant={formData.enableStress ? "default" : "secondary"} className="text-[10px]">
-                            {formData.enableStress ? 'ON' : 'OFF'}
-                          </Badge>
-                        </div>
-                      </button>
-                    </TooltipTrigger>
-                    {!isProductionTier && (
-                      <TooltipContent>
-                        <p>Upgrade to Production tier to enable stress testing</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
+                   {/* Stress Test Toggle */}
+                   <Tooltip>
+                     <TooltipTrigger asChild>
+                       <button
+                         type="button"
+                         disabled={!isProductionTier}
+                         onClick={() => setFormData(prev => ({ ...prev, enableStress: !prev.enableStress }))}
+                         className={`w-full p-3 border text-left transition-all ${
+                           !isProductionTier
+                             ? 'opacity-50 cursor-not-allowed border-border'
+                             : formData.enableStress
+                               ? 'border-primary bg-primary/10'
+                               : 'border-border hover:border-primary/50'
+                         }`}
+                       >
+                         <div className="flex items-center justify-between">
+                           <div>
+                             <h4 className="font-mono text-xs uppercase tracking-wider">STRESS TEST</h4>
+                             <p className="text-[10px] text-muted-foreground mt-1">
+                               High-load breaking point analysis
+                             </p>
+                           </div>
+                           <Badge variant={formData.enableStress ? "default" : "secondary"} className="text-[10px]">
+                             {formData.enableStress ? 'ON' : 'OFF'}
+                           </Badge>
+                         </div>
+                       </button>
+                     </TooltipTrigger>
+                     <TooltipContent className="font-mono text-xs max-w-xs">
+                       {!isProductionTier ? (
+                         <p>Stress tests require Production-tier authorization. Pushes systems beyond rated capacity.</p>
+                       ) : (
+                         <p>Exceeds normal capacity to identify breaking points and recovery behavior.</p>
+                       )}
+                     </TooltipContent>
+                   </Tooltip>
 
                   {/* Production Approval Toggle */}
                   {formData.environment === 'production' && (
@@ -530,12 +534,14 @@ export default function NewProject() {
                           </div>
                         </button>
                       </TooltipTrigger>
-                      {!isProductionTier && (
-                        <TooltipContent>
-                          <p>Upgrade to Production tier to approve production testing</p>
-                        </TooltipContent>
-                      )}
-                    </Tooltip>
+                     <TooltipContent className="font-mono text-xs max-w-xs">
+                       {!isProductionTier ? (
+                         <p>Production approval requires Production-tier authorization. Active tests may affect live users.</p>
+                       ) : (
+                         <p>Confirms this target is authorized for active testing against a production environment.</p>
+                       )}
+                     </TooltipContent>
+                   </Tooltip>
                   )}
                 </div>
               </TooltipProvider>
@@ -708,17 +714,17 @@ export default function NewProject() {
               </Tooltip>
             </TooltipProvider>
 
-            {!subscription.subscribed && !subscription.is_test_user && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => createCheckout('standard')} 
-                className="w-full gap-2"
-              >
-                <Zap className="w-4 h-4" />
-                Subscribe to Scan
-              </Button>
-            )}
+             {!subscription.subscribed && !subscription.is_test_user && (
+               <Button 
+                 type="button" 
+                 variant="outline" 
+                 onClick={() => createCheckout('standard')} 
+                 className="w-full gap-2"
+               >
+                 <Zap className="w-4 h-4" />
+                 ACTIVATE SUBSCRIPTION
+               </Button>
+             )}
 
             <Button type="button" variant="ghost" onClick={() => navigate(-1)} className="w-full">
               ABORT
