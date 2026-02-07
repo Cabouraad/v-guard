@@ -101,24 +101,40 @@ setSubscription({
      }
    }, []);
  
-   // Check subscription on mount and auth changes
-   useEffect(() => {
-     checkSubscription();
- 
-     const { data: authListener } = supabase.auth.onAuthStateChange(() => {
-       checkSubscription();
-     });
- 
-     return () => {
-       authListener.subscription.unsubscribe();
-     };
-   }, [checkSubscription]);
- 
-   // Periodic refresh every 60 seconds
-   useEffect(() => {
-     const interval = setInterval(checkSubscription, 60000);
-     return () => clearInterval(interval);
-   }, [checkSubscription]);
+  // Check subscription on auth state changes only (not on mount directly)
+  // This avoids race conditions where mount fires before the session is restored
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (
+          event === "INITIAL_SESSION" ||
+          event === "SIGNED_IN" ||
+          event === "TOKEN_REFRESHED"
+        ) {
+          if (session) {
+            checkSubscription();
+          } else {
+            setSubscription(DEFAULT_SUBSCRIPTION_STATE);
+            setLoading(false);
+          }
+        } else if (event === "SIGNED_OUT") {
+          setSubscription(DEFAULT_SUBSCRIPTION_STATE);
+          setLoading(false);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [checkSubscription]);
+
+  // Periodic refresh every 60 seconds (only when subscribed)
+  useEffect(() => {
+    if (!subscription.subscribed) return;
+    const interval = setInterval(checkSubscription, 60000);
+    return () => clearInterval(interval);
+  }, [checkSubscription, subscription.subscribed]);
  
    return {
      subscription,
