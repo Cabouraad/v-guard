@@ -13,54 +13,94 @@
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState<string | null>(null);
  
-   const checkSubscription = useCallback(async () => {
-     try {
-       setLoading(true);
-       setError(null);
- 
-       const { data: session } = await supabase.auth.getSession();
-       if (!session.session) {
-         setSubscription(DEFAULT_SUBSCRIPTION_STATE);
-         return;
-       }
- 
-       const { data, error: fnError } = await supabase.functions.invoke(
-         "check-subscription"
-       );
- 
-       if (fnError) {
-         throw new Error(fnError.message);
-       }
- 
-       if (data.error) {
-         throw new Error(data.error);
-       }
- 
-setSubscription({
-  subscribed: data.subscribed ?? false,
-  tier: data.tier as SubscriptionTier | null,
-  price_id: data.price_id ?? null,
-  subscription_end: data.subscription_end ?? null,
-  cancel_at_period_end: data.cancel_at_period_end ?? false,
-  scan_limit: data.scan_limit ?? 0,
-  scans_used: data.scans_used ?? 0,
-  scans_remaining: data.scans_remaining ?? 0,
-  period_reset_date: data.period_reset_date ?? null,
-  allow_soak: data.allow_soak ?? false,
-  allow_stress: data.allow_stress ?? false,
-  priority_queue: data.priority_queue ?? false,
-  retention_days: data.retention_days ?? 7,
-  max_concurrency: data.max_concurrency ?? 1,
-  is_test_user: data.is_test_user ?? false,
-});
-     } catch (err) {
-       const message = err instanceof Error ? err.message : "Unknown error";
-       setError(message);
-       console.error("[useSubscription] Error:", message);
-     } finally {
-       setLoading(false);
-     }
-   }, []);
+  const checkSubscription = useCallback(async (retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY_MS = 1000;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        setSubscription(DEFAULT_SUBSCRIPTION_STATE);
+        return;
+      }
+
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "check-subscription"
+      );
+
+      if (fnError) {
+        throw new Error(fnError.message);
+      }
+
+      if (data.error) {
+        // "Auth session missing" is a transient server-side error — retry
+        if (
+          typeof data.error === "string" &&
+          data.error.includes("Auth session missing") &&
+          retryCount < MAX_RETRIES
+        ) {
+          console.warn(
+            `[useSubscription] Transient auth error, retrying (${retryCount + 1}/${MAX_RETRIES})...`
+          );
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (retryCount + 1)));
+          return checkSubscription(retryCount + 1);
+        }
+        throw new Error(data.error);
+      }
+
+      setSubscription({
+        subscribed: data.subscribed ?? false,
+        tier: data.tier as SubscriptionTier | null,
+        price_id: data.price_id ?? null,
+        subscription_end: data.subscription_end ?? null,
+        cancel_at_period_end: data.cancel_at_period_end ?? false,
+        scan_limit: data.scan_limit ?? 0,
+        scans_used: data.scans_used ?? 0,
+        scans_remaining: data.scans_remaining ?? 0,
+        period_reset_date: data.period_reset_date ?? null,
+        allow_soak: data.allow_soak ?? false,
+        allow_stress: data.allow_stress ?? false,
+        priority_queue: data.priority_queue ?? false,
+        retention_days: data.retention_days ?? 7,
+        max_concurrency: data.max_concurrency ?? 1,
+        is_test_user: data.is_test_user ?? false,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+
+      // Retry on transient errors (500s, network issues)
+      if (retryCount < MAX_RETRIES && isTransientError(message)) {
+        console.warn(
+          `[useSubscription] Transient error, retrying (${retryCount + 1}/${MAX_RETRIES})...`
+        );
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (retryCount + 1)));
+        return checkSubscription(retryCount + 1);
+      }
+
+      setError(message);
+      console.error("[useSubscription] Error:", message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Detect transient errors that are worth retrying
+  const isTransientError = (message: string): boolean => {
+    const transientPatterns = [
+      "Auth session missing",
+      "Failed to fetch",
+      "NetworkError",
+      "TypeError: Load failed",
+      "CORS",
+      "500",
+    ];
+    return transientPatterns.some((p) =>
+      message.toLowerCase().includes(p.toLowerCase())
+    );
+  };
  
    const createCheckout = useCallback(async (tier: SubscriptionTier) => {
      try {
