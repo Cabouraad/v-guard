@@ -1,18 +1,34 @@
- import { useState, useEffect, useCallback } from "react";
- import { supabase } from "@/integrations/supabase/client";
- import {
-   SubscriptionState,
-   DEFAULT_SUBSCRIPTION_STATE,
-   SubscriptionTier,
- } from "@/lib/subscription";
- 
- export function useSubscription() {
-   const [subscription, setSubscription] = useState<SubscriptionState>(
-     DEFAULT_SUBSCRIPTION_STATE
-   );
-   const [loading, setLoading] = useState(true);
-   const [error, setError] = useState<string | null>(null);
- 
+import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  SubscriptionState,
+  DEFAULT_SUBSCRIPTION_STATE,
+  SubscriptionTier,
+} from "@/lib/subscription";
+
+// Detect transient errors that are worth retrying
+const isTransientError = (message: string): boolean => {
+  const transientPatterns = [
+    "Auth session missing",
+    "Failed to fetch",
+    "NetworkError",
+    "TypeError: Load failed",
+    "CORS",
+    "500",
+  ];
+  return transientPatterns.some((p) =>
+    message.toLowerCase().includes(p.toLowerCase())
+  );
+};
+
+export function useSubscription() {
+  const [subscription, setSubscription] = useState<SubscriptionState>(
+    DEFAULT_SUBSCRIPTION_STATE
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const checkSubscription = useCallback(async (retryCount = 0) => {
     const MAX_RETRIES = 3;
     const RETRY_DELAY_MS = 1000;
@@ -35,8 +51,7 @@
         throw new Error(fnError.message);
       }
 
-      if (data.error) {
-        // "Auth session missing" is a transient server-side error — retry
+      if (data && data.error) {
         if (
           typeof data.error === "string" &&
           data.error.includes("Auth session missing") &&
@@ -51,6 +66,8 @@
         throw new Error(data.error);
       }
 
+      // Successfully got subscription data — clear any error and update state
+      setError(null);
       setSubscription({
         subscribed: data.subscribed ?? false,
         tier: data.tier as SubscriptionTier | null,
@@ -87,62 +104,46 @@
     }
   }, []);
 
-  // Detect transient errors that are worth retrying
-  const isTransientError = (message: string): boolean => {
-    const transientPatterns = [
-      "Auth session missing",
-      "Failed to fetch",
-      "NetworkError",
-      "TypeError: Load failed",
-      "CORS",
-      "500",
-    ];
-    return transientPatterns.some((p) =>
-      message.toLowerCase().includes(p.toLowerCase())
-    );
-  };
- 
-   const createCheckout = useCallback(async (tier: SubscriptionTier) => {
-     try {
-       const { data, error: fnError } = await supabase.functions.invoke(
-         "stripe-checkout",
-         { body: { tier } }
-       );
- 
-       if (fnError) throw new Error(fnError.message);
-       if (data.error) throw new Error(data.error);
- 
-       if (data.url) {
-         window.open(data.url, "_blank");
-       }
-     } catch (err) {
-       const message = err instanceof Error ? err.message : "Unknown error";
-       console.error("[createCheckout] Error:", message);
-       throw err;
-     }
-   }, []);
- 
-   const openPortal = useCallback(async () => {
-     try {
-       const { data, error: fnError } = await supabase.functions.invoke(
-         "stripe-portal"
-       );
- 
-       if (fnError) throw new Error(fnError.message);
-       if (data.error) throw new Error(data.error);
- 
-       if (data.url) {
-         window.open(data.url, "_blank");
-       }
-     } catch (err) {
-       const message = err instanceof Error ? err.message : "Unknown error";
-       console.error("[openPortal] Error:", message);
-       throw err;
-     }
-   }, []);
- 
+  const createCheckout = useCallback(async (tier: SubscriptionTier) => {
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "stripe-checkout",
+        { body: { tier } }
+      );
+
+      if (fnError) throw new Error(fnError.message);
+      if (data.error) throw new Error(data.error);
+
+      if (data.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("[createCheckout] Error:", message);
+      throw err;
+    }
+  }, []);
+
+  const openPortal = useCallback(async () => {
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke(
+        "stripe-portal"
+      );
+
+      if (fnError) throw new Error(fnError.message);
+      if (data.error) throw new Error(data.error);
+
+      if (data.url) {
+        window.open(data.url, "_blank");
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("[openPortal] Error:", message);
+      throw err;
+    }
+  }, []);
+
   // Check subscription on auth state changes only (not on mount directly)
-  // This avoids race conditions where mount fires before the session is restored
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -169,19 +170,32 @@
     };
   }, [checkSubscription]);
 
+  // Auto-retry when in error state — self-heal after 3 seconds
+  useEffect(() => {
+    if (error && !subscription.subscribed) {
+      retryTimeoutRef.current = setTimeout(() => {
+        console.log("[useSubscription] Auto-retrying after error...");
+        checkSubscription();
+      }, 3000);
+      return () => {
+        if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+      };
+    }
+  }, [error, subscription.subscribed, checkSubscription]);
+
   // Periodic refresh every 60 seconds (only when subscribed)
   useEffect(() => {
     if (!subscription.subscribed) return;
     const interval = setInterval(checkSubscription, 60000);
     return () => clearInterval(interval);
   }, [checkSubscription, subscription.subscribed]);
- 
-   return {
-     subscription,
-     loading,
-     error,
-     checkSubscription,
-     createCheckout,
-     openPortal,
-   };
- }
+
+  return {
+    subscription,
+    loading,
+    error,
+    checkSubscription,
+    createCheckout,
+    openPortal,
+  };
+}
