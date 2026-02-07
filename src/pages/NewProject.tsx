@@ -29,7 +29,7 @@ import type { EnvironmentType, ScanMode } from '@/types/database';
 
 export default function NewProject() {
   const navigate = useNavigate();
-  const { subscription, loading: subLoading, createCheckout, openPortal, checkSubscription } = useSubscription();
+  const { subscription, loading: subLoading, error: subError, createCheckout, openPortal, checkSubscription } = useSubscription();
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   
@@ -597,6 +597,8 @@ export default function NewProject() {
               <SubscriptionBanner
                 subscription={subscription}
                 loading={subLoading}
+                error={subError}
+                onRetry={checkSubscription}
                 onUpgrade={() => createCheckout('production')}
                 onManageBilling={openPortal}
               />
