@@ -205,7 +205,7 @@ function TargetRow({ project, isExpanded, onToggle }: TargetRowProps) {
         </td>
         <td className="px-4 py-4">
           <div className="flex items-center justify-end gap-1">
-            <Link to={`/dashboard/scans/${project.id}`} onClick={(e) => e.stopPropagation()}>
+            <Link to="/dashboard/targets/new" onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                 <Play className="w-3.5 h-3.5" />
               </Button>
@@ -260,7 +260,7 @@ function TargetRow({ project, isExpanded, onToggle }: TargetRowProps) {
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-2">
-                <Link to={`/dashboard/scans/${project.id}`} onClick={(e) => e.stopPropagation()}>
+                <Link to="/dashboard/targets/new" onClick={(e) => e.stopPropagation()}>
                   <Button size="sm" variant="outline" className="gap-1.5 font-mono text-[10px]">
                     <Play className="w-3 h-3" />
                     QUEUE SCAN

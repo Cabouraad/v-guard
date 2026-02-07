@@ -22,7 +22,7 @@ export default function Auth() {
   const { toast } = useToast();
 
   // Get the intended destination from location state
-  const from = (location.state as { from?: string })?.from || '/projects';
+  const from = (location.state as { from?: string })?.from || '/dashboard/targets';
 
   // Redirect if already logged in
   useEffect(() => {
