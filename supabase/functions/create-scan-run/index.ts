@@ -100,18 +100,23 @@ Deno.serve(async (req) => {
      // ============================================
      // 1. AUTHENTICATE USER
      // ============================================
-     const authHeader = req.headers.get("Authorization");
-     if (!authHeader) {
-       throw new Error("UNAUTHORIZED: No authorization header provided");
-     }
- 
-     const token = authHeader.replace("Bearer ", "");
-     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-     if (userError || !userData.user) {
-       throw new Error(`UNAUTHORIZED: ${userError?.message || "Invalid token"}`);
-     }
-     const userId = userData.user.id;
-     logStep("User authenticated", { userId });
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        throw new Error("UNAUTHORIZED: No authorization header provided");
+      }
+
+      const token = authHeader.replace("Bearer ", "");
+      const anonClient = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) {
+        throw new Error(`UNAUTHORIZED: ${claimsError?.message || "Invalid token"}`);
+      }
+      const userId = claimsData.claims.sub as string;
+      logStep("User authenticated", { userId });
  
      // ============================================
      // 2. PARSE AND VALIDATE REQUEST

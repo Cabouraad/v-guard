@@ -55,14 +55,15 @@ Deno.serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
       auth: { persistSession: false },
     });
 
-    // Authenticate user
+    // Authenticate user via local JWT verification (no network call)
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "No authorization header provided" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
@@ -70,49 +71,30 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-
-    // Retry getUser up to 2 times to handle transient "Auth session missing" errors
-    let userData;
-    let userError;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const result = await supabase.auth.getUser(token);
-      userData = result.data;
-      userError = result.error;
-      if (!userError && userData?.user) break;
-      if (attempt < 2) {
-        logStep(`getUser attempt ${attempt + 1} failed, retrying...`, {
-          error: userError?.message,
-        });
-        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
-      }
-    }
-
-    if (userError) {
-      logStep("Authentication failed after retries", { error: userError.message });
-      return new Response(JSON.stringify({ error: `Authentication error: ${userError.message}` }), {
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: claimsData, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      logStep("JWT verification failed", { error: claimsError?.message });
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 401,
       });
     }
 
-    const user = userData?.user;
-    if (!user) {
-      return new Response(JSON.stringify({ error: "User not authenticated" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-    logStep("User authenticated", { userId: user.id });
+    const userId = claimsData.claims.sub as string;
+    logStep("User authenticated", { userId });
 
     // Check if this is an internal test user (server-side only, cannot be spoofed)
     const { data: isTestUser } = await supabase.rpc("is_internal_test_user", {
-      p_user_id: user.id,
+      p_user_id: userId,
     });
     logStep("Test user check", { isTestUser: !!isTestUser });
 
     // ── Read entitlements from DB (no Stripe API call) ──────────────
     const { data: entitlements, error: entError } = await supabase
-      .rpc("get_user_entitlements", { p_user_id: user.id });
+      .rpc("get_user_entitlements", { p_user_id: userId });
 
     if (entError) {
       logStep("Entitlements query error", { message: entError.message });
@@ -142,7 +124,7 @@ Deno.serve(async (req) => {
     const periodStartStr = periodStart.toISOString().split("T")[0];
 
     const { data: usageData } = await supabase.rpc("get_monthly_usage", {
-      p_user_id: user.id,
+      p_user_id: userId,
       p_period_start: periodStartStr,
     });
     const scansUsed = usageData ?? 0;
