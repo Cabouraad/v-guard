@@ -6,20 +6,28 @@ import {
   SubscriptionTier,
 } from "@/lib/subscription";
 
-// Detect transient errors that are worth retrying
-const isTransientError = (message: string): boolean => {
-  const transientPatterns = [
-    "Auth session missing",
-    "Failed to fetch",
-    "NetworkError",
-    "TypeError: Load failed",
-    "CORS",
-    "500",
-  ];
-  return transientPatterns.some((p) =>
-    message.toLowerCase().includes(p.toLowerCase())
-  );
-};
+/**
+ * Maps raw API response to SubscriptionState.
+ */
+function mapResponseToState(data: Record<string, unknown>): SubscriptionState {
+  return {
+    subscribed: (data.subscribed as boolean) ?? false,
+    tier: (data.tier as SubscriptionTier | null) ?? null,
+    price_id: (data.price_id as string | null) ?? null,
+    subscription_end: (data.subscription_end as string | null) ?? null,
+    cancel_at_period_end: (data.cancel_at_period_end as boolean) ?? false,
+    scan_limit: (data.scan_limit as number) ?? 0,
+    scans_used: (data.scans_used as number) ?? 0,
+    scans_remaining: (data.scans_remaining as number) ?? 0,
+    period_reset_date: (data.period_reset_date as string | null) ?? null,
+    allow_soak: (data.allow_soak as boolean) ?? false,
+    allow_stress: (data.allow_stress as boolean) ?? false,
+    priority_queue: (data.priority_queue as boolean) ?? false,
+    retention_days: (data.retention_days as number) ?? 7,
+    max_concurrency: (data.max_concurrency as number) ?? 1,
+    is_test_user: (data.is_test_user as boolean) ?? false,
+  };
+}
 
 export function useSubscription() {
   const [subscription, setSubscription] = useState<SubscriptionState>(
@@ -27,19 +35,29 @@ export function useSubscription() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const checkSubscription = useCallback(async (retryCount = 0) => {
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY_MS = 1000;
+  // Deduplication: track in-flight call with a monotonic counter.
+  // Only the latest call is allowed to write state.
+  const callIdRef = useRef(0);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track if we've ever received a successful response this session
+  const hasSucceededRef = useRef(false);
+
+  const checkSubscription = useCallback(async () => {
+    // Increment call ID — only the latest caller will write state
+    const thisCallId = ++callIdRef.current;
 
     try {
       setLoading(true);
-      setError(null);
 
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) {
-        setSubscription(DEFAULT_SUBSCRIPTION_STATE);
+        // No session = not logged in; only write if still latest call
+        if (thisCallId === callIdRef.current) {
+          setSubscription(DEFAULT_SUBSCRIPTION_STATE);
+          setError(null);
+          setLoading(false);
+        }
         return;
       }
 
@@ -47,60 +65,35 @@ export function useSubscription() {
         "check-subscription"
       );
 
-      if (fnError) {
-        throw new Error(fnError.message);
-      }
+      // Stale call — a newer one has started, discard this result
+      if (thisCallId !== callIdRef.current) return;
 
-      if (data && data.error) {
-        if (
-          typeof data.error === "string" &&
-          data.error.includes("Auth session missing") &&
-          retryCount < MAX_RETRIES
-        ) {
-          console.warn(
-            `[useSubscription] Transient auth error, retrying (${retryCount + 1}/${MAX_RETRIES})...`
-          );
-          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (retryCount + 1)));
-          return checkSubscription(retryCount + 1);
-        }
-        throw new Error(data.error);
-      }
+      if (fnError) throw new Error(fnError.message);
+      if (data?.error) throw new Error(data.error);
 
-      // Successfully got subscription data — clear any error and update state
+      // Success — update state
+      hasSucceededRef.current = true;
       setError(null);
-      setSubscription({
-        subscribed: data.subscribed ?? false,
-        tier: data.tier as SubscriptionTier | null,
-        price_id: data.price_id ?? null,
-        subscription_end: data.subscription_end ?? null,
-        cancel_at_period_end: data.cancel_at_period_end ?? false,
-        scan_limit: data.scan_limit ?? 0,
-        scans_used: data.scans_used ?? 0,
-        scans_remaining: data.scans_remaining ?? 0,
-        period_reset_date: data.period_reset_date ?? null,
-        allow_soak: data.allow_soak ?? false,
-        allow_stress: data.allow_stress ?? false,
-        priority_queue: data.priority_queue ?? false,
-        retention_days: data.retention_days ?? 7,
-        max_concurrency: data.max_concurrency ?? 1,
-        is_test_user: data.is_test_user ?? false,
-      });
+      setSubscription(mapResponseToState(data));
     } catch (err) {
+      // Stale call — discard
+      if (thisCallId !== callIdRef.current) return;
+
       const message = err instanceof Error ? err.message : "Unknown error";
 
-      // Retry on transient errors (500s, network issues)
-      if (retryCount < MAX_RETRIES && isTransientError(message)) {
-        console.warn(
-          `[useSubscription] Transient error, retrying (${retryCount + 1}/${MAX_RETRIES})...`
-        );
-        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * (retryCount + 1)));
-        return checkSubscription(retryCount + 1);
+      // If we've already received valid subscription data this session,
+      // don't overwrite it with an error — just log and ignore.
+      if (hasSucceededRef.current) {
+        console.warn("[useSubscription] Transient error after prior success, ignoring:", message);
+        return;
       }
 
       setError(message);
       console.error("[useSubscription] Error:", message);
     } finally {
-      setLoading(false);
+      if (thisCallId === callIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -143,7 +136,7 @@ export function useSubscription() {
     }
   }, []);
 
-  // Check subscription on auth state changes only (not on mount directly)
+  // Check subscription on auth state changes — debounced via callIdRef
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -155,10 +148,12 @@ export function useSubscription() {
           if (session) {
             checkSubscription();
           } else {
+            hasSucceededRef.current = false;
             setSubscription(DEFAULT_SUBSCRIPTION_STATE);
             setLoading(false);
           }
         } else if (event === "SIGNED_OUT") {
+          hasSucceededRef.current = false;
           setSubscription(DEFAULT_SUBSCRIPTION_STATE);
           setLoading(false);
         }
